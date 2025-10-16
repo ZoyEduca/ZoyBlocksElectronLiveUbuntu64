@@ -517,4 +517,44 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // Select baudrate
   // document.getElementById("selectBaudrate").addEventListener("change", (e) => atualizarBaudrate(e.target.value));
+
+  // Adiciona o evento de clique no botão executar código
+  const btnExecutarCodigo = document.getElementById("btnExecutarCodigo");
+  if (btnExecutarCodigo) {
+    btnExecutarCodigo.addEventListener("click", executarCodigo);
+  }
 });
+
+
+async function executarCodigo() {
+  const preElement = document.getElementById("codigoPython");
+  const codigoPython = preElement?.textContent?.trim();
+
+  if (!codigoPython || codigoPython.includes("Nenhum código gerado")) {
+    alert("Nenhum código Python válido foi gerado.");
+    return;
+  }
+
+  console.log("🧠 Código a executar:\n", codigoPython);
+
+  try {
+    const resultado = await window.electronAPI.executarCodigo(codigoPython);
+
+    if (resultado.status) {
+      console.log("[✅] Execução concluída com sucesso.");
+    } else {
+      console.error("[❌] Erro na execução:");
+    }
+
+    // Exibir logs no console
+    if (Array.isArray(resultado.logs)) {
+      resultado.logs.forEach(log => console.log(log));
+    }
+
+    // Se quiser exibir na UI futuramente:
+    // document.getElementById("terminal").textContent = resultado.logs.join('\n');
+
+  } catch (err) {
+    console.error("[ERRO] Falha ao executar código:", err);
+  }
+}

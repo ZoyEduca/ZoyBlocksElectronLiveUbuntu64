@@ -1,40 +1,34 @@
-//const serialService = require('./serial-service');
+const serialService = require('./serial-services');
 
 async function executarCodigo(codigoPython) {
     const logs = [];
     const comandosEnviados = [];
-    let comandoValido = true;
 
-    // Regex para encontrar chamadas de função e seus argumentos.
     const regex = /(\w+)\((.*?)\)/g;
     let match;
+
+    logs.push(`[INFO] Código recebido:\n${codigoPython}`);
 
     while ((match = regex.exec(codigoPython)) !== null) {
         const funcao = match[1];
         const argsString = match[2];
-        const args = argsString.split(',').map(arg => arg.trim().replace(/^['"]|['"]$/g, ''));
+        const args = argsString
+            .split(',')
+            .map(arg => arg.trim().replace(/^['"]|['"]$/g, ''));
 
-        let comandoSerial = '';
+        let comandoSerial = null;
 
-        if (args.length > 1) {
-            // Se a função tem múltiplos argumentos, assume que o primeiro é o comando e o segundo são os valores
-            // Ex: mover_frente("MOTOR_FRENTE", "150,150") -> <MOTOR_FRENTE:150,150>
-            const nomeComando = args[0];
-            const valores = args[1];
-            comandoSerial = `<${nomeComando}:${valores}>`;
-        } else {
-            // Se a função não tem argumentos (ou tem apenas um), usa o switch
+        try {
             switch (funcao) {
                 case 'iniciar_zoy':
                     comandoSerial = `<INICIAR_ZOY>`;
                     break;
                 case 'pausa':
-                    comandoSerial = `<PAUSA: ${args[0]}>`;
+                    comandoSerial = `<PAUSA:${args[0]}>`;
                     break;
                 case 'som_nota':
                     comandoSerial = `<SOM_NOTA:${args[0]},${args[1]}>`;
                     break;
-                // Os comandos de motor sem argumentos
                 case 'motor_esquerdo_frente':
                     comandoSerial = `<MOTOR_ESQUERDO_FRENTE:150>`;
                     break;
@@ -53,6 +47,16 @@ async function executarCodigo(codigoPython) {
                 case 'digital_write':
                     comandoSerial = `<DIGITAL_WRITE:${args[0]},${args[1]}>`;
                     break;
+                // case 'definir_pino_digital': {
+                //     const pino = args[0]; // D13
+                //     const estado = args[1]; // HIGH
+                //     comandoSerial = `<DIGITAL_WRITE:${pino},${estado}>`;
+                //     break;
+                // }
+                case 'definir_pino_digital': {
+                    comandoSerial = `<DIGITAL_WRITE:13,HIGH>`;
+                    break;
+                }
                 case 'analog_write':
                     comandoSerial = `<ANALOG_WRITE:${args[0]},${args[1]}>`;
                     break;
@@ -65,29 +69,40 @@ async function executarCodigo(codigoPython) {
                 case 'servo360':
                     comandoSerial = `<SERVO_360:${args[0]},${args[1]}>`;
                     break;
+
+                // Se quiser permitir comandos genéricos:
+                case 'mover_frente':
+                case 'mover_tras':
+                case 'led_pisca_n':
+                    if (args.length >= 2) {
+                        comandoSerial = `<${args[0]}:${args[1]}>`;
+                    }
+                    break;
+
                 default:
                     logs.push(`[AVISO] Função desconhecida: ${funcao}`);
-                    comandoValido = false;
-                    break;
             }
-        }
 
-        if (comandoValido) {
-            comandosEnviados.push(serialService.enviarComandoSerial(comandoSerial));
-            logs.push(`[INFO] Comando traduzido: ${comandoSerial}`);
+            if (comandoSerial) {
+                logs.push(`[INFO] Traduzido para: ${comandoSerial}`);
+                comandosEnviados.push(serialService.enviarComandoSerial(comandoSerial));
+            } else {
+                logs.push(`[AVISO] Comando serial não gerado para: ${funcao}`);
+            }
+
+        } catch (err) {
+            logs.push(`[ERRO] Erro ao processar ${funcao}: ${err.message}`);
         }
     }
 
     try {
         await Promise.all(comandosEnviados);
-        logs.push(`[SUCESSO] Todos os comandos foram enviados.`);
-        return { logs: logs, mensagem: 'Execução concluída com sucesso!', status: true };
+        logs.push(`[SUCESSO] Todos os comandos enviados com sucesso.`);
+        return { status: true, mensagem: "Execução concluída", logs };
     } catch (error) {
-        logs.push(`[ERRO] Ocorreu um erro durante a execução: ${error.mensagem}`);
-        return { logs: logs, mensagem: `Ocorreu um erro: ${error.mensagem}`, status: false };
+        logs.push(`[ERRO] Falha no envio serial: ${error.message}`);
+        return { status: false, mensagem: "Erro ao executar comandos", logs };
     }
 }
 
-module.exports = {
-    executarCodigo
-};
+module.exports = { executarCodigo };

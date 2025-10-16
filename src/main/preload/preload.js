@@ -80,7 +80,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
    onRespostaSerial: (callback) => ipcRenderer.on('onRespostaSerial', (event, data) => callback(data)),
 
   // Funções para envio de dados e execução de código
-   enviarDados: (dados) => ipcRenderer.invoke('enviar-dados', dados),
    executarCodigo: (codigo) => ipcRenderer.invoke('executar-codigo', codigo),
    enviarComandoSerial: (comando) => ipcRenderer.invoke('enviar-comando-serial', comando),
 });

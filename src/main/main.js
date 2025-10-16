@@ -208,6 +208,14 @@ ipcMain.handle('conectar-porta', (event, porta) => {
 ipcMain.handle('desconectar-porta', () => serialService.desconectarPorta());
 ipcMain.handle('enviar-comando-serial', (event, comando) => serialService.enviarComandoSerial(comando));
 
+
+// ----------------------------------------------------------------------------
+// ----------- Handlers do IPC para Executar blocos ---------------------------
+// ----------------------------------------------------------------------------
+
+ipcMain.handle('executar-codigo', (event, comando) => blocklyService.executarCodigo(comando));
+
+
 // ----------------------------------------------------------------------------
 // ----------- Handlers do IPC para Terminal Completo -------------------------
 // ----------------------------------------------------------------------------
