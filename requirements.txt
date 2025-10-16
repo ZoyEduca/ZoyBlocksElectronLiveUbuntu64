@@ -1,6 +1,19 @@
-numpy==1.23.3
+#numpy==1.23.3
+#sentence-transformers==5.1.0
+#scikit-learn
+
+# PyTorch CPU-only (sem CUDA, sem visão, sem áudio)
+torch==2.4.1+cpu --index-url https://download.pytorch.org/whl/cpu
+
+# Sentence Transformers
 sentence-transformers==5.1.0
-scikit-learn
+
+# Dependências auxiliares (geralmente requeridas)
+numpy>=1.26.0
+scikit-learn>=1.4.0
+scipy>=1.11.0
+transformers>=4.44.0
+
 
 # instalar manualmente
 # Instalar o torch com suporte somente para CPU - sem cuda, gpu ...
