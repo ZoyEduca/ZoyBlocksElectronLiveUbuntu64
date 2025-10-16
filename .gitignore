@@ -10,13 +10,6 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# Regras mais específicas para os caminhos que você listou anteriormente:
-
-
-# Ignora qualquer pasta chamada 'blockly' em qualquer subdiretório (Regra mais forte)
-**/blockly/
-
-
 # Arquivos de Blockly gerados (se existirem)
 *.js.map
 

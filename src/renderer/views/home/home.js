@@ -323,11 +323,6 @@ document.getElementById("abrirZoyGPTBtn").addEventListener("click", () => {
   window.electronAPI.abrirZoyGPT();
 });
 
-// modoGravar
-document.getElementById("abrirGravarBtn").addEventListener("click", () => {
-  window.electronAPI.abrirModoGravar();
-});
-
 
 // ----------------------------------------------------------------------------
 // ----------- Esconder/Exibir sidebar (menu lateral) -------------------------
