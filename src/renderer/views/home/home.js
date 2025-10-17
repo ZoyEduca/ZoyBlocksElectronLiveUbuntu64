@@ -85,6 +85,11 @@ const assetsToLoad = {
     },
     // importar categorias do zoySteamBlocks
     {
+      name: "evento_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/evento.js`,
+    },
+    {
       name: "botao_zoySteamBlocks",
       type: "js",
       path: `${window.paths.blocks_device.zoy_steam_blocks}cates/botao.js`,

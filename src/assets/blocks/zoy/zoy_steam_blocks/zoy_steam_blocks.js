@@ -20,15 +20,21 @@ window.zoySteamBlocks = function () {
 
   // Executa as funções (define os blocos no Blockly)
   window.zoySteamInitFunctions.forEach((fn) => {
-    try { fn(); } catch (e) { console.error("Erro init zoySteam fn:", e); }
+    try {
+      fn();
+    } catch (e) {
+      console.error("Erro init zoySteam fn:", e);
+    }
   });
 
   // Monta toolboxZoySteam com as categorias do dispositivo
   const toolboxContents = [];
-  (window.zoySteamCategories || []).forEach((categoria) => toolboxContents.push(categoria));
+  (window.zoySteamCategories || []).forEach((categoria) =>
+    toolboxContents.push(categoria)
+  );
 
   window.toolboxZoySteam = {
     kind: "categoryToolbox",
-    contents: toolboxContents
+    contents: toolboxContents,
   };
 };

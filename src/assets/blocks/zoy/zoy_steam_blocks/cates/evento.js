@@ -1,5 +1,4 @@
 (() => {
-  
   // Defini a cor da categoria e blocos
   const COR_BLOCOS = "#A55B80";
 
@@ -18,7 +17,7 @@
     ]);
 
     // Geração de código Python
-    Blockly.Python["iniciar_zoy_steam"] = () => `iniciar_zoy( "ZOY", "ZOY")\n`;
+    Blockly.Python["iniciar_zoy_steam"] = () => `iniciar_zoy("ZOY", "ZOY")\n`;
   };
 
   const categoriaEventos = {
@@ -27,9 +26,6 @@
     colour: COR_BLOCOS,
     contents: [{ kind: "block", type: "iniciar_zoy_steam" }],
   };
-
-  // Exporta os blocos de eventos e sua categoria toolbox como módulo duplo
-  //export { eventos, categoriaEventos };
 
   // Registra blocos
   window.zoySteamRegistry = window.zoySteamRegistry || [];

@@ -20,9 +20,6 @@ async function executarCodigo(codigoPython) {
 
         try {
             switch (funcao) {
-                case 'iniciar_zoy':
-                    comandoSerial = `<INICIAR_ZOY>`;
-                    break;
                 case 'pausa':
                     comandoSerial = `<PAUSA:${args[0]}>`;
                     break;
@@ -72,6 +69,7 @@ async function executarCodigo(codigoPython) {
 
                 // Se quiser permitir comandos genéricos:
                 case 'mover_frente':
+                case 'iniciar_zoy':
                 case 'mover_tras':
                 case 'led_pisca_n':
                     if (args.length >= 2) {

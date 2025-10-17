@@ -101,12 +101,7 @@
     ],
   };
 
-  //export { comunicacaoInfra, categoriaComunicacaoInfra };
-
   // Registra blocos
   window.zoySteamRegistry = window.zoySteamRegistry || [];
-  window.zoySteamRegistry.push({
-    init: comunicacaoInfra,
-    category: categoriaComunicacaoInfra,
-  });
+  window.zoySteamRegistry.push({ init: comunicacaoInfra, category: categoriaComunicacaoInfra });
 })();
