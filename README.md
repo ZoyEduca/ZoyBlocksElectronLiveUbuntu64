@@ -27,11 +27,25 @@ npm install
 
 *(ou `npm i` para a versão curta)*
 
-### 3. Crie o arquivo .env
+
+### 3. Copiar pasta blockly para os arquivos de origem do nosso sistema
+
+Atualmente utilizamos o **blockly: v8.0.5** (ou use versão compatível).
+instalamos essa versão que está anotada ao nosso package.json e copiamos ela para nossos arquivos de origem com o comando
+
+``` bash
+npm run copy-blockly
+```
+
+Obs: esse comando faz parte de um script de automatização presente em nosso package.json
+Obs: nosso gitignore vai ignorar a pasta blockly para o repositorio, então é sempre necessario rodar o comando acima quando iniciar o projeto do zero.
+
+
+### 4. Crie o arquivo .env
 
 Crie um arquivo com nome **.env** e copie o conteudo do arquivo **.env_exemple** nesse novo arquivo **.env** 
 
-### 4. Criar e ativar ambiente virtual (Venv) para o chatbot
+### 5. Criar e ativar ambiente virtual (Venv) para o chatbot
 
 O chatbot requer **Python 3.11.9** (ou versão compatível).\
 Verifique a versão instalada:
@@ -88,7 +102,7 @@ pip install -r requirements.txt
 pip install torch==2.2.1+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
 ```
 
-### 5. Executar o projeto
+### 6. Executar o projeto
 
 Para iniciar a aplicação Electron:
 

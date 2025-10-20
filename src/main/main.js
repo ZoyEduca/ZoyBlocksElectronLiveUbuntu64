@@ -1,8 +1,15 @@
-// chamada do serviço de serial
-const serialService = require('../main/services/serial-services');
-const blocklyService = require('../main/services/blockly-service');
+// chamada dos serviços
+const serialService = require("../main/services/serial-services");
+const blocklyService = require("../main/services/blockly-service");
 
-const { app, BrowserWindow, globalShortcut, ipcMain } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  ipcMain,
+  shell,
+} = require("electron");
+
 require("dotenv").config();
 const fs = require("fs/promises");
 const { spawn } = require("child_process");
@@ -13,8 +20,6 @@ console.log("Ambiente atual:", process.env.NODE_ENV);
 console.log("-------------------------------------");
 
 let pythonProcess = null;
-
-
 
 // ------------------------------------------------------------
 // ----------- Janela principal -------------------------------
@@ -53,11 +58,24 @@ const createWindow = () => {
     mainWindow.webContents.closeDevTools();
   }
 
-  // Manipulador para o retorno à tela inicial
-  ipcMain.handle("voltar-para-home", () => {
-    mainWindow.loadFile(
-      path.join(__dirname, "..", "renderer", "views", "home", "home.html")
-    );
+  // --- NOVO: Handler IPC para Navegação (Go Back) ---
+  ipcMain.on("navigate-to-view", (event, viewName) => {
+    let filePath;
+    // Assume que 'home' é o retorno para Robótica
+    if (viewName === "home") {
+      filePath = path.join(
+        __dirname,
+        "..",
+        "renderer",
+        "views",
+        "home",
+        "home.html"
+      );
+    }
+
+    if (filePath) {
+      mainWindow.loadFile(filePath);
+    }
   });
 };
 
@@ -128,22 +146,22 @@ ipcMain.handle("perguntar", async (event, pergunta) => {
 });
 
 // === LOG DE CONVERSAS ===
-ipcMain.handle('log-conversation', async (event, pergunta, resposta) => {
-    const logDir = path.join(app.getPath('home'), 'logs'); // Diretório para salvar os logs, ex: desktop/logs
-    const logFilePath = path.join(logDir, 'conversas.log'); // Caminho completo do arquivo de log
+ipcMain.handle("log-conversation", async (event, pergunta, resposta) => {
+  const logDir = path.join(app.getPath("home"), "logs"); // Diretório para salvar os logs, ex: desktop/logs
+  const logFilePath = path.join(logDir, "conversas.log"); // Caminho completo do arquivo de log
 
-    try {
-        await fs.mkdir(logDir, { recursive: true });
-        const logData = {
-            timestamp: new Date().toISOString(),
-            pergunta,
-            resposta,
-        };
-        await fs.appendFile(logFilePath, JSON.stringify(logData) + '\n');
-        console.log('Conversa salva com sucesso.');
-    } catch (error) {
-        console.error('Falha ao salvar o log da conversa:', error);
-    }
+  try {
+    await fs.mkdir(logDir, { recursive: true });
+    const logData = {
+      timestamp: new Date().toISOString(),
+      pergunta,
+      resposta,
+    };
+    await fs.appendFile(logFilePath, JSON.stringify(logData) + "\n");
+    console.log("Conversa salva com sucesso.");
+  } catch (error) {
+    console.error("Falha ao salvar o log da conversa:", error);
+  }
 });
 
 // -------------------------- Funções Utilitárias ------------------------------
@@ -154,16 +172,16 @@ ipcMain.handle('log-conversation', async (event, pergunta, resposta) => {
 // Função para gerar os caminhos dinâmicos do Python
 function getPythonPaths() {
   const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
-  
+
   const pythonPath = path.join(
     basePath,
-    'venv',
-    process.platform === 'win32' ? 'Scripts' : 'bin',
-    process.platform === 'win32' ? 'python.exe' : 'python'
+    "venv",
+    process.platform === "win32" ? "Scripts" : "bin",
+    process.platform === "win32" ? "python.exe" : "python"
   );
-  
-  const scriptPath = path.join(basePath, 'python', 'chatbot.py');
-  
+
+  const scriptPath = path.join(basePath, "python", "chatbot.py");
+
   return { pythonPath, scriptPath };
 }
 
@@ -179,7 +197,6 @@ function startPythonProcess() {
   pythonProcess.stderr.setEncoding("utf8");
   pythonProcess.stdout.setEncoding("utf8");
 
-
   pythonProcess.on("error", (err) =>
     console.error("❌ Erro ao iniciar Python:", err)
   );
@@ -192,28 +209,72 @@ function startPythonProcess() {
 }
 
 
+
+
 // ----------------------------------------------------------------------------
 // ----------- Handlers do IPC para Serial ------------------------------------
 // ----------------------------------------------------------------------------
 
-ipcMain.handle('listar-portas', () => serialService.listarPortas());
-ipcMain.handle('conectar-porta', (event, porta) => {
-    if (typeof porta !== 'string' || !porta.trim()) {
-        const mensagemErro = "A porta serial não foi selecionada ou é inválida.";
-        console.error(`[ERRO] ${mensagemErro}`);
-        return { status: false, mensagem: mensagemErro };
+ipcMain.handle("listar-portas", () => serialService.listarPortas());
+
+ipcMain.handle("conectar-porta", async (event, porta, baudrate) => {
+  try {
+    if (typeof porta !== "string" || !porta.trim()) {
+      const mensagemErro = "A porta serial não foi selecionada ou é inválida.";
+      return { status: false, mensagem: mensagemErro };
     }
-    return serialService.conectarPorta(porta, 9600);
+
+    // Tente conectar à porta serial
+    const resultado = await serialService.conectarPorta(porta, baudrate);
+    if (!resultado) {
+      const mensagemErro = "Falha ao conectar à porta serial.";
+      return { status: false, mensagem: mensagemErro };
+    }
+
+    // Se a conexão for bem-sucedida
+    return { status: true, mensagem: "Conexão estabelecida com sucesso!" };
+
+  } catch (error) {
+    // Se ocorrer algum erro no processo de conexão
+    return { status: false, mensagem: `Erro ao tentar conectar: ${error.message}` };
+  }
 });
-ipcMain.handle('desconectar-porta', () => serialService.desconectarPorta());
-ipcMain.handle('enviar-comando-serial', (event, comando) => serialService.enviarComandoSerial(comando));
+
+
+ipcMain.handle("desconectar-porta", async () => {
+  try {
+    const resultado = await serialService.desconectarPorta();
+    if (resultado) {
+      return { status: true, mensagem: "Desconexão bem-sucedida!" };
+    } else {
+      const mensagemErro = "Falha ao desconectar da porta serial.";
+      return { status: false, mensagem: mensagemErro };
+    }
+  } catch (error) {
+    // Caso ocorra algum erro no processo de desconexão
+    return { status: false, mensagem: `Erro ao tentar desconectar: ${error.message}` };
+  }
+});
+
+
+ipcMain.handle("enviar-comando-serial", (event, comando) =>
+  serialService.enviarComandoSerial(comando)
+);
+
+
+
 
 
 // ----------------------------------------------------------------------------
 // ----------- Handlers do IPC para Executar blocos ---------------------------
 // ----------------------------------------------------------------------------
 
-ipcMain.handle('executar-codigo', (event, comando) => blocklyService.executarCodigo(comando));
+ipcMain.handle("executar-codigo", (event, comando) =>
+  blocklyService.executarCodigo(comando)
+);
+
+
+
 
 
 // ----------------------------------------------------------------------------
@@ -231,7 +292,7 @@ ipcMain.handle("abrir-terminal-completo", () => {
       sandbox: false,
     },
   });
-    // Remover o menu só para esta janela
+  // Remover o menu só para esta janela
   terminalWindow.setMenu(null);
 
   terminalWindow.loadFile(
@@ -249,10 +310,48 @@ ipcMain.handle("abrir-terminal-completo", () => {
 
 
 
+// ----------------------------------------------------------------------------
+// ----------- Handlers do IPC para abrir links externos ----------------------
+// ----------------------------------------------------------------------------
+
+ipcMain.handle("open-external", async (event, url) => {
+  if (isSafeUrl(url)) {
+    try {
+      await shell.openExternal(url);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, reason: err.message };
+    }
+  } else {
+    return { ok: false, reason: "URL não permitida" };
+  }
+});
+
+// Função para verificar se a URL é segura (whitelist)
+function isSafeUrl(url) {
+  try {
+    const parsedUrl = new URL(url);
+    // Permitindo apenas https:// para maior segurança
+    if (parsedUrl.protocol !== "https:") {
+      return false;
+    }
+    // Adicione outros domínios confiáveis conforme necessário
+    const allowedDomains = ["zoy.com.br"];
+    if (!allowedDomains.includes(parsedUrl.hostname)) {
+      return false;
+    }
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+
+
+
 // -------------------------------------------------------------
 // ----------- Lógica de inicialização do aplicativo -----------
 // -------------------------------------------------------------
-// Este método será chamado quando o Electron terminar
 // Algumas APIs só podem ser usadas depois que este evento ocorre.
 app.whenReady().then(() => {
   // Cria a janela principal
@@ -280,9 +379,6 @@ app.on("window-all-closed", () => {
   }
 });
 
-
-
-
 // ----------------------------------------------------
 // ----------- Funções de configurações Globais -------
 // ----------------------------------------------------
@@ -303,8 +399,3 @@ function disableDevToolsShortcuts() {
   globalShortcut.register("Ctrl+Shift+F", () => {});
   globalShortcut.register("F1", () => {});
 }
-
-// Verifica as versões do Node.js, Electron e Chromium
-// console.log('Node.js:', process.versions.node);
-// console.log('Electron:', process.versions.electron);
-// console.log('Chromium:', process.versions.chrome);
