@@ -76,10 +76,13 @@ async function executarCodigo(codigoPython) {
                 case 'mover_frente':
                     comandoSerial = `<${comando}:${argumentos_comando}>`;
                     break;
-                case 'iniciar_zoy':
+                case 'mover_tras':
                     comandoSerial = `<${comando}:${argumentos_comando}>`;
                     break;
-                case 'mover_tras':
+                case 'parar_motor':
+                    comandoSerial = `<${comando}:${argumentos_comando}>`;
+                    break;
+                case 'iniciar_zoy':
                     comandoSerial = `<${comando}:${argumentos_comando}>`;
                     break;
                 default:
