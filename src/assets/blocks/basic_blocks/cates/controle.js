@@ -26,8 +26,9 @@
         },
       ]);
 
-      Blockly.Python["aguarde_segundos"] = (block) =>
-        `time.sleep(${block.getFieldValue("TEMPO")})\n`;
+      Blockly.Python["aguarde_segundos"] = (block) =>{
+        return `time.sleep("AGUARDA", "${block.getFieldValue("TEMPO")}")\n`;
+      }
     }
 
     // Redefinição de blocos com nova cor
