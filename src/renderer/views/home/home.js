@@ -436,8 +436,6 @@ async function toggleConexao() {
     // Desconectar
     const resposta = await window.electronAPI.desconectarPorta();
     if (resposta.status) {
-      alert(resposta.mensagem); // Exibe mensagem de sucesso
-
       conectado = false;
       document.getElementById("btnConectar").textContent = "Conectar";
       document.getElementById("btnConectar").classList.remove("btn-danger");
@@ -449,8 +447,6 @@ async function toggleConexao() {
     // Conectar
     const resposta = await window.electronAPI.conectarPorta(portaSelecionada, baudrateSelecionado);
     if (resposta.status) {
-      alert(resposta.mensagem); // Exibe mensagem de sucesso
-
       conectado = true;
       document.getElementById("btnConectar").textContent = "Desconectar";
       document.getElementById("btnConectar").classList.remove("btn-warning");
@@ -531,10 +527,19 @@ async function ajudaLinkOpen(e) {
   }
 }
 
-// Eventos vindos do Electron
-window.electronAPI.onStatusSerial((data) => log(data.mensagem, "sistema"));
-window.electronAPI.onDadosSerial((data) => log(data, "normal"));
-window.electronAPI.onErroSerial((data) => log(data.mensagem, "erro"));
+// Eventos de analise da conexão serial
+window.electronAPI.onStatusSerial((data) => {
+  log(data.mensagem, "sistema");
+  alert(data.mensagem, "sistema");
+});
+window.electronAPI.onDadosSerial((data) => {
+  log(data, "normal");
+  alert(data, "normal");
+});
+window.electronAPI.onErroSerial((data) => {
+  log(data.mensagem, "erro");
+  alert(data.mensagem, "erro");
+});
 
 
 
