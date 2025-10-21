@@ -4,15 +4,10 @@ const { BrowserWindow } = require('electron');
 let serialPort = null;
 let parser = null;
 
-function enviarDadosSerial(dados) {
-    const allWindows = BrowserWindow.getAllWindows();
-    allWindows.forEach(win => {
-        if (!win.isDestroyed()) {
-            win.webContents.send('onDadosSerial', dados);
-            win.webContents.send('onRespostaSerial', dados);
-        }
-    });
-}
+// ==== NOVAS VARIÁVEIS PARA CONTROLE DE FLUXO (QUEUE) ====
+const commandQueue = [];
+let isWaitingForAck = false; // TRUE se estamos esperando PAUSA_FIM, SERVO_FIM, etc.
+// ========================================================
 
 function enviarStatusSerial(data) {
     const allWindows = BrowserWindow.getAllWindows();
@@ -21,6 +16,25 @@ function enviarStatusSerial(data) {
             win.webContents.send('onStatusSerial', data);
         }
     });
+}
+
+function enviarDadosSerial(dados) {
+    const allWindows = BrowserWindow.getAllWindows();
+    allWindows.forEach(win => {
+        if (!win.isDestroyed()) {
+            win.webContents.send('onDadosSerial', dados);
+            win.webContents.send('onRespostaSerial', dados);
+        }
+    });
+    
+    // NOVO: TRATAMENTO DE ACK/FIM DE AÇÃO DO ARDUINO
+    if (dados === 'PAUSA_FIM' || dados === 'SERVO_FIM') {
+        if (isWaitingForAck) {
+            isWaitingForAck = false; // Libera o fluxo
+            console.log(`[ACK] FIM de Ação Temporal (${dados}) recebido. Liberando a fila...`);
+            process.nextTick(sendNextCommandFromQueue); // Tenta enviar o próximo
+        }
+    }
 }
 
 async function listarPortas() {
@@ -46,7 +60,6 @@ async function conectarPorta(porta, baudRate) {
             baudRate: baudRate,
         });
 
-        // Adiciona um listener para o evento de 'open' para logar a conexão.
         serialPort.on('open', () => {
             console.log(`[INFO] Conectado à porta ${porta} com baudrate ${baudRate}`);
             enviarStatusSerial({ mensagem: `Conectado à porta ${porta}` });
@@ -56,7 +69,7 @@ async function conectarPorta(porta, baudRate) {
         parser.on('data', data => {
             const trimmedData = data.toString().trim();
             if (trimmedData) {
-                enviarDadosSerial(trimmedData);
+                enviarDadosSerial(trimmedData); // Chama a função que trata ACK
             }
         });
 
@@ -65,7 +78,6 @@ async function conectarPorta(porta, baudRate) {
             enviarStatusSerial({ mensagem: `Desconectado da porta ${porta}` });
         });
 
-        // Captura e reporta erros de forma mais detalhada.
         serialPort.on('error', (err) => {
             console.error(`[ERRO] Erro na porta serial: ${err.message}`);
             enviarStatusSerial({ mensagem: `Erro na porta serial: ${err.message}` });
@@ -82,6 +94,10 @@ async function conectarPorta(porta, baudRate) {
 async function desconectarPorta() {
     if (serialPort && serialPort.isOpen) {
         try {
+            // Limpa a fila e o estado de espera antes de fechar
+            commandQueue.length = 0;
+            isWaitingForAck = false; 
+            
             await serialPort.close();
             console.log("[INFO] Desconectando...");
             return { status: true, mensagem: "Desconectado com sucesso." };
@@ -94,36 +110,83 @@ async function desconectarPorta() {
     }
 }
 
-async function enviarComandoSerial(comando) {
-    try {
-        if (!serialPort || !serialPort.isOpen) {
-            throw new Error('Dispositivo não conectado.');
-        }
+// NOVO: Função interna para enviar comandos, sem gerenciar a fila
+async function enviarComandoSerialImmediate(comando) {
+    if (!serialPort || !serialPort.isOpen) {
+        throw new Error('Dispositivo não conectado.');
+    }
 
-        // Converte o comando para um Buffer, replicando a codificação do Python
-        const comandoBuffer = Buffer.from(comando + '\n', 'utf-8');
+    const comandoBuffer = Buffer.from(comando + '\n', 'utf-8');
 
-        await new Promise((resolve, reject) => {
-            serialPort.write(comandoBuffer, (err) => {
-                if (err) {
-                    return reject(err);
+    await new Promise((resolve, reject) => {
+        serialPort.write(comandoBuffer, (err) => {
+            if (err) {
+                return reject(err);
+            }
+
+            serialPort.drain((drainErr) => {
+                if (drainErr) {
+                    return reject(drainErr);
                 }
-
-                serialPort.drain((drainErr) => {
-                    if (drainErr) {
-                        return reject(drainErr);
-                    }
-                    console.log(`[INFO] Comando enviado: ${comando}`);
-                    resolve();
-                });
+                console.log(`[INFO] Comando enviado: ${comando}`);
+                resolve();
             });
         });
+    });
 
-        return { status: true, mensagem: `Comando enviado: ${comando}` };
-    } catch (error) {
-        console.error("Erro ao enviar comando:", error);
-        return { status: false, mensagem: `Erro ao enviar comando: ${error.message}` };
+    return { status: true, mensagem: `Comando enviado: ${comando}` };
+}
+
+// NOVO: Função que verifica o estado e envia o próximo comando da fila
+function sendNextCommandFromQueue() {
+    if (commandQueue.length === 0 || isWaitingForAck) {
+        return; 
     }
+
+    const nextCommand = commandQueue.shift();
+    
+    // 1. Verifica se o comando exige espera de ACK do Arduino
+    const requiresAck = nextCommand.startsWith('<AGUARDA') || 
+                        nextCommand.startsWith('<PAUSA') || 
+                        nextCommand.startsWith('<A:') || 
+                        nextCommand.startsWith('<C:');
+    
+    if (requiresAck) {
+        isWaitingForAck = true; 
+    }
+    
+    // 2. Envia o comando
+    enviarComandoSerialImmediate(nextCommand).then(() => {
+        // Se o comando não exigia espera (isWaitingForAck é FALSE), envia o próximo imediatamente
+        if (!isWaitingForAck) {
+            // Usa setTimeout(0) para garantir que a pilha de chamadas não estoure com muitos comandos
+            setTimeout(sendNextCommandFromQueue, 0); 
+        }
+        // Se exigia espera, o sendNextCommandFromQueue será chamado por 'PAUSA_FIM' ou 'SERVO_FIM'
+    }).catch(error => {
+        console.error(`[ERRO] Falha ao enviar comando da fila: ${error.message}`);
+        
+        // Em caso de falha no envio, libera a espera e tenta o próximo comando
+        isWaitingForAck = false;
+        setTimeout(sendNextCommandFromQueue, 0);
+    });
+}
+
+// NOVO: Função pública para adicionar comandos à fila
+async function adicionarComandoNaFila(comando) {
+    if (!serialPort || !serialPort.isOpen) {
+        return { status: false, mensagem: 'Dispositivo não conectado.' };
+    }
+    
+    // Adiciona o comando à fila
+    commandQueue.push(comando);
+    
+    // Inicia/Continua o processamento da fila
+    if (!isWaitingForAck) {
+        sendNextCommandFromQueue();
+    }
+    
+    return { status: true, mensagem: `Comando adicionado à fila: ${comando}` };
 }
 
 
@@ -131,5 +194,6 @@ module.exports = {
     listarPortas,
     conectarPorta,
     desconectarPorta,
-    enviarComandoSerial,
+    // Substitui a função de envio pela função que gerencia a fila
+    enviarComandoSerial: adicionarComandoNaFila, 
 };

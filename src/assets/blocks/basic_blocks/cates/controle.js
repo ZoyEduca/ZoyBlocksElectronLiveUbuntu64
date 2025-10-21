@@ -3,34 +3,40 @@
   const COR_BLOCOS = 210;
 
   const controle = () => {
-    Blockly.defineBlocksWithJsonArray([
-      {
-        type: "aguarde_segundos",
-        message0: "aguarde %1 segundos",
-        args0: [
-          {
-            type: "field_number",
-            name: "TEMPO",
-            value: 1,
-            min: 0,
-            precision: 0.1,
-          },
-        ],
-        previousStatement: null,
-        nextStatement: null,
-        colour: COR_BLOCOS,
-        tooltip: "Pausa a execução por N segundos",
-        helpUrl: "",
-      },
-    ]);
+    // Verifica se o bloco já foi definido
+    if (!Blockly.Blocks["aguarde_segundos"]) {
+      Blockly.defineBlocksWithJsonArray([
+        {
+          type: "aguarde_segundos",
+          message0: "aguarde %1 segundos",
+          args0: [
+            {
+              type: "field_number",
+              name: "TEMPO",
+              value: 1,
+              min: 0,
+              precision: 0.1,
+            },
+          ],
+          previousStatement: null,
+          nextStatement: null,
+          colour: COR_BLOCOS,
+          tooltip: "Pausa a execução por N segundos",
+          helpUrl: "",
+        },
+      ]);
 
-    // Geração de código Python
-    Blockly.Python["aguarde_segundos"] = (block) =>{
-      const tempo = block.getFieldValue("TEMPO");
-      return `time_sleep("AGUARDA", "${tempo}")\n`;
+      // ✅ MUDANÇA CRUCIAL AQUI: Gerar o comando 'pausa(AGUARDA, N)'
+      Blockly.Python["aguarde_segundos"] = (block) => {
+        const tempo = block.getFieldValue("TEMPO");
+        // O comando 'pausa' é processado pelo executarCodigo.js
+        // e traduzido para o comando serial <AGUARDA:N>
+        return `pausa('AGUARDA', ${tempo})\n`;
+      };
     }
 
-    // Redefinição de blocos nativos com nova cor
+    // ... (Blocos controls_repeat_ext_custom, controls_whileUntil_custom, controls_for_custom - Lógica inalterada)
+
     Blockly.Blocks["controls_repeat_ext_custom"] = Object.assign(
       {},
       Blockly.Blocks["controls_repeat_ext"]
@@ -66,7 +72,7 @@
     Blockly.Python["controls_for_custom"] = function (block) {
       return Blockly.Python["controls_for"](block);
     };
-};
+  };
 
   const categoriaControle = {
     kind: "category",

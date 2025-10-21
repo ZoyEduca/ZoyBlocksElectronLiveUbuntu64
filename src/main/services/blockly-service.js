@@ -1,14 +1,15 @@
-const serialService = require('./serial-services');
+const serialService = require('./serial-services'); // Renomeado para service
 
 async function executarCodigo(codigoPython) {
     const logs = [];
-    const comandosEnviados = [];
+    // Removida a array 'comandosEnviados' e o 'Promise.all'
 
     const regex = /(\w+)\((.*?)\)/g;
     let match;
 
     logs.push(`[INFO] Código recebido:\n${codigoPython}`);
 
+    // Loop para extrair e enviar comandos sequencialmente
     while ((match = regex.exec(codigoPython)) !== null) {
         const funcao = match[1];
         const argsString = match[2];
@@ -16,76 +17,33 @@ async function executarCodigo(codigoPython) {
             .split(',')
             .map(arg => arg.trim().replace(/^['"]|['"]$/g, ''));
 
-        // Argumentos de comando, onde args[0] é o comando e args[1] são os parâmetros
         const comando = args[0];
-        const argumentos_comando = args.slice(1).join(',');  // Juntar todos os argumentos após o primeiro
+        const argumentos_comando = args.slice(1).join(',');
         let comandoSerial = null;
 
         //  === Funções enviadas dos blocos do Blockly para os dispositivos via serial ===
         try {
             switch (funcao) {
                 case 'led_pisca_n':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'led_left':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'led_right':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
-                case 'pausa':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
+                case 'pausa':       // Comandos temporais agora gerenciados pela fila do serialService
                 case 'som_nota':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'motor_esquerdo_frente':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'motor_direito_frente':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'motor_esquerdo_tras':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'motor_direito_tras':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'set_pin_mode':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'digital_write':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
-                case 'definir_pino_digital': {
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
-                }
+                case 'definir_pino_digital':
                 case 'analog_write':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'ler_ultrassom':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
-                case 'servo':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
+                case 'servo':       // Comandos temporais agora gerenciados pela fila do serialService
                 case 'servo360':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'mover_frente':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'mover_tras':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'parar_motor':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
                 case 'iniciar_zoy':
-                    comandoSerial = `<${comando}:${argumentos_comando}>`;
-                    break;
-                case 'time_sleep':
                     comandoSerial = `<${comando}:${argumentos_comando}>`;
                     break;
                 default:
@@ -93,25 +51,39 @@ async function executarCodigo(codigoPython) {
             }
 
             if (comandoSerial) {
-                logs.push(`[INFO] ${funcao} -> Traduzido para: ${comandoSerial}`);
-                comandosEnviados.push(serialService.enviarComandoSerial(comandoSerial));
+                logs.push(`[INFO] Traduzido para: ${comandoSerial}`);
+                
+                // === PONTO CRÍTICO DE MUDANÇA ===
+                // Chamamos o serviço serial. Ele adiciona o comando à fila interna
+                // e retorna UMA PROMESSA que resolve IMEDIATAMENTE.
+                const resultadoEnvio = await serialService.enviarComandoSerial(comandoSerial);
+                
+                if (!resultadoEnvio.status) {
+                    logs.push(`[ERRO] Falha ao adicionar à fila: ${resultadoEnvio.mensagem}`);
+                    // O erro aqui significa que a porta não estava aberta, por exemplo.
+                    // Podemos optar por quebrar a execução ou continuar. Vamos quebrar:
+                    throw new Error(`Falha de conexão: ${resultadoEnvio.mensagem}`);
+                }
+                // Se o resultado for status: true, o comando foi colocado na fila com sucesso.
+                // A execução da fila é tratada internamente pelo serialService.
+                // Não há necessidade de 'await' para a *conclusão* da ação aqui, apenas para a *aceitação* da fila.
+
             } else {
                 logs.push(`[AVISO] Comando serial não gerado para: ${funcao}`);
             }
 
         } catch (err) {
             logs.push(`[ERRO] Erro ao processar ${funcao}: ${err.message}`);
+            // Se houver um erro, paramos a execução do código de alto nível.
+            return { status: false, mensagem: "Erro ao processar/enviar comandos", logs };
         }
     }
-
-    try {
-        await Promise.all(comandosEnviados);
-        logs.push(`[SUCESSO] Todos os comandos enviados com sucesso.`);
-        return { status: true, mensagem: "Execução concluída", logs };
-    } catch (error) {
-        logs.push(`[ERRO] Falha no envio serial: ${error.message}`);
-        return { status: false, mensagem: "Erro ao executar comandos", logs };
-    }
+    
+    // NOTA: O fluxo de execução do código de alto nível (Blockly) agora terminou.
+    // Os comandos ainda podem estar sendo executados na fila do serialService.
+    
+    logs.push(`[SUCESSO] Todos os comandos foram adicionados à fila de execução com sucesso.`);
+    return { status: true, mensagem: "Execução (Adição à fila) concluída", logs };
 }
 
 module.exports = { executarCodigo };
