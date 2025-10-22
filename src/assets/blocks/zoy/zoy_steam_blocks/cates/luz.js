@@ -92,23 +92,23 @@
       },
     ]);
 
-    // Geração de código Python
-    Blockly.Python["led_pisca_n"] = (block) => {
+    // Geração de código js
+    Blockly.JavaScript.forBlock["led_pisca_n"] = (block) => {
       const vezes = block.getFieldValue("VEZES");
       return `led_pisca_n("LED_TREZE", "${vezes}")\n`;
     };
 
-    Blockly.Python["led_left"] = function (block) {
+    Blockly.JavaScript.forBlock["led_left"] = function (block) {
       const nivel = block.getFieldValue("LEVEL");
       return `led_left("LED_LEFT", "${nivel}")\n`;
     };
 
-    Blockly.Python["led_right"] = function (block) {
+    Blockly.JavaScript.forBlock["led_right"] = function (block) {
       const nivel = block.getFieldValue("LEVEL");
       return `led_right("LED_RIGHT","${nivel}")\n`;
     };
 
-    Blockly.Python["led_define_pino"] = (block) => {
+    Blockly.JavaScript.forBlock["led_define_pino"] = (block) => {
       const pin = block.getFieldValue("PIN");
       const level = block.getFieldValue("LEVEL");
       return `definir_pino_digital("DIGITAL_WRITE","${pin}, ${level}")\n`;

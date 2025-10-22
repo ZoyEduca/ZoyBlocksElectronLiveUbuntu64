@@ -27,7 +27,7 @@
       ]);
 
       // ✅ MUDANÇA CRUCIAL AQUI: Gerar o comando 'pausa(AGUARDA, N)'
-      Blockly.Python["aguarde_segundos"] = (block) => {
+      Blockly.JavaScript.forBlock["aguarde_segundos"] = (block) => {
         const tempo = block.getFieldValue("TEMPO");
         // O comando 'pausa' é processado pelo executarCodigo.js
         // e traduzido para o comando serial <AGUARDA:N>
@@ -35,43 +35,25 @@
       };
     }
 
-    // ... (Blocos controls_repeat_ext_custom, controls_whileUntil_custom, controls_for_custom - Lógica inalterada)
-
-    Blockly.Blocks["controls_repeat_ext_custom"] = Object.assign(
-      {},
-      Blockly.Blocks["controls_repeat_ext"]
-    );
-    Blockly.Blocks["controls_repeat_ext_custom"].init = function () {
-      Blockly.Blocks["controls_repeat_ext"].init.call(this);
+    // ... Personalização dos blocos nativos
+    const original_controls_repeat_ext = Blockly.Blocks['controls_repeat_ext'].init;
+    Blockly.Blocks['controls_repeat_ext'].init = function() {
+      original_controls_repeat_ext.call(this);
       this.setColour(COR_BLOCOS);
-    };
-    Blockly.Python["controls_repeat_ext_custom"] = function (block) {
-      return Blockly.Python["controls_repeat_ext"](block);
-    };
-
-    Blockly.Blocks["controls_whileUntil_custom"] = Object.assign(
-      {},
-      Blockly.Blocks["controls_whileUntil"]
-    );
-    Blockly.Blocks["controls_whileUntil_custom"].init = function () {
-      Blockly.Blocks["controls_whileUntil"].init.call(this);
+    }
+    
+    const original_controls_whileUntil = Blockly.Blocks['controls_whileUntil'].init;
+    Blockly.Blocks['controls_whileUntil'].init = function() {
+      original_controls_whileUntil.call(this);
       this.setColour(COR_BLOCOS);
-    };
-    Blockly.Python["controls_whileUntil_custom"] = function (block) {
-      return Blockly.Python["controls_whileUntil"](block);
-    };
+    }
 
-    Blockly.Blocks["controls_for_custom"] = Object.assign(
-      {},
-      Blockly.Blocks["controls_for"]
-    );
-    Blockly.Blocks["controls_for_custom"].init = function () {
-      Blockly.Blocks["controls_for"].init.call(this);
+    const original_controls_for = Blockly.Blocks['controls_for'].init;
+    Blockly.Blocks['controls_for'].init = function() {
+      original_controls_for.call(this);
       this.setColour(COR_BLOCOS);
-    };
-    Blockly.Python["controls_for_custom"] = function (block) {
-      return Blockly.Python["controls_for"](block);
-    };
+    }
+    
   };
 
   const categoriaControle = {
@@ -86,9 +68,10 @@
       { kind: "sep", gap: "50" },
 
       // { kind: "label", text: "Controle de repetição:" },
-      { kind: "block", type: "controls_repeat_ext_custom" },
-      { kind: "block", type: "controls_whileUntil_custom" },
-      { kind: "block", type: "controls_for_custom" },
+      { kind: "block", type: "controls_repeat_ext" },
+      { kind: "block", type: "controls_whileUntil" },
+      { kind: "block", type: "controls_for" },
+
       // Adicionando um separador visual
       { kind: "sep", gap: "50" },
 
