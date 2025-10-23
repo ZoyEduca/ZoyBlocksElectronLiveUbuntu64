@@ -40,7 +40,7 @@ const assetsToLoad = {
     { name: "pt-br", type: "js", path: `${window.paths.blockly.msg}pt-br.js` },
   ],
   blocksDevice: [
-    //Blocos basicos
+    // Blocos basicos
     {
       name: "basicBlocks",
       type: "js",
@@ -56,6 +56,12 @@ const assetsToLoad = {
       name: "logica_basicBlocks",
       type: "js",
       path: `${window.paths.blocks_device.basic_blocks}cates/logica.js`,
+    },
+    // NOVO: Adicionando a categoria Matemática
+    {
+      name: "matematica_basicBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.basic_blocks}cates/matematica.js`,
     },
     // blocos do zoySteamBlocks
     {
@@ -90,7 +96,6 @@ const assetsToLoad = {
     },
   ],
 };
-
 // ----------------------------------------------------------------------------
 // ----------- Importações Iniciais da página ---------------------------------
 // ----------------------------------------------------------------------------
