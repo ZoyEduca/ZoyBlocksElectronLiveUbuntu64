@@ -63,9 +63,9 @@ const assetsToLoad = {
       path: `${window.paths.blocks_device.basic_blocks}cates/matematica.js`,
     },
     {
-      name: "funcao_basicBlocks",
+      name: "texto_basicBlocks",
       type: "js",
-      path: `${window.paths.blocks_device.basic_blocks}cates/funcao.js`,
+      path: `${window.paths.blocks_device.basic_blocks}cates/texto.js`,
     },
     {
       name: "serial_basicBlocks",
@@ -73,14 +73,14 @@ const assetsToLoad = {
       path: `${window.paths.blocks_device.basic_blocks}cates/serial.js`,
     },
     {
-      name: "texto_basicBlocks",
-      type: "js",
-      path: `${window.paths.blocks_device.basic_blocks}cates/texto.js`,
-    },
-    {
       name: "variavel_basicBlocks",
       type: "js",
       path: `${window.paths.blocks_device.basic_blocks}cates/variaveis.js`,
+    },
+    {
+      name: "funcao_basicBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.basic_blocks}cates/funcao.js`,
     },
     // blocos do zoySteamBlocks
     {
@@ -90,9 +90,59 @@ const assetsToLoad = {
     },
     // importar categorias do zoySteamBlocks
     {
+      name: "evento_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/evento.js`,
+    },
+    {
       name: "luz_zoySteamBlocks",
       type: "js",
       path: `${window.paths.blocks_device.zoy_steam_blocks}cates/luz.js`,
+    },
+    {
+      name: "motores_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/motores.js`,
+    },
+    {
+      name: "motoresAvancados_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/motoresAvancados.js`,
+    },
+    {
+      name: "sensores_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/sensores.js`,
+    },
+    {
+      name: "botao_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/botao.js`,
+    },
+    {
+      name: "pinoLivres_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/pinoLivres.js`,
+    },
+    {
+      name: "som_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/som.js`,
+    },
+    {
+      name: "servo_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/servo.js`,
+    },
+    {
+      name: "infravermelho_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/infravermelho.js`,
+    },
+    {
+      name: "comunicacaoInfra_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/comunicacaoInfra.js`,
     },
   ],
   images: [
