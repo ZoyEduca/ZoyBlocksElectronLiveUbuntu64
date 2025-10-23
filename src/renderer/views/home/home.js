@@ -62,17 +62,25 @@ const assetsToLoad = {
       type: "js",
       path: `${window.paths.blocks_device.basic_blocks}cates/matematica.js`,
     },
-    // NOVO: Adicionando a categoria Funções
     {
       name: "funcao_basicBlocks",
       type: "js",
       path: `${window.paths.blocks_device.basic_blocks}cates/funcao.js`,
     },
-    // NOVO: Adicionando a categoria Serial
     {
       name: "serial_basicBlocks",
       type: "js",
       path: `${window.paths.blocks_device.basic_blocks}cates/serial.js`,
+    },
+    {
+      name: "texto_basicBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.basic_blocks}cates/texto.js`,
+    },
+    {
+      name: "variavel_basicBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.basic_blocks}cates/variaveis.js`,
     },
     // blocos do zoySteamBlocks
     {
@@ -138,7 +146,6 @@ async function initializeImports() {
 let workspace = null; // Variável para armazenar a instância do workspace do Blockly
 
 async function createWorkspace(toolbox) {
- 
   // carrega midia(imgs,mp3 ...) do arquivo blockly local
   const mediaPath = window.paths.blockly.media;
   try {
