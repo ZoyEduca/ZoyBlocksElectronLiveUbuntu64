@@ -37,8 +37,8 @@ async function executarCodigo(codigoJavaScript) {
       blocklyFunctions.enviarComando("digital_write", comando, argsString),
     definir_pino_digital: async (comando, argsString) =>
       blocklyFunctions.enviarComando("definir_pino_digital", comando, argsString),
-    analog_write: async (comando, argsString) =>
-      blocklyFunctions.enviarComando("analog_write", comando, argsString),
+    definir_pino_pwm: async (comando, argsString) =>
+      blocklyFunctions.enviarComando("definir_pino_pwm", comando, argsString),
     pausa: async (comando, argsString) =>
       blocklyFunctions.enviarComando("pausa", comando, argsString), // Inclui aguarde_segundos
 
@@ -49,10 +49,12 @@ async function executarCodigo(codigoJavaScript) {
       blocklyFunctions.enviarComando("led_left", comando, argsString),
     led_right: async (comando, argsString) =>
       blocklyFunctions.enviarComando("led_right", comando, argsString),
-    som_nota: async (comando, argsString) =>
-      blocklyFunctions.enviarComando("som_nota", comando, argsString),
 
-    // ----------- Funções Mover -------------------
+    // ----------- Funções Motores -------------------
+    mover_frente: async (comando, argsString) =>
+      blocklyFunctions.enviarComando("mover_frente", comando, argsString),
+    mover_tras: async (comando, argsString) =>
+      blocklyFunctions.enviarComando("mover_tras", comando, argsString),
     motor_esquerdo_frente: async (comando, argsString) =>
       blocklyFunctions.enviarComando("motor_esquerdo_frente", comando, argsString),
     motor_direito_frente: async (comando, argsString) =>
@@ -62,20 +64,28 @@ async function executarCodigo(codigoJavaScript) {
     motor_direito_tras: async (comando, argsString) =>
       blocklyFunctions.enviarComando("motor_direito_tras", comando, argsString),
 
-    // ----------- Funções Motores -------------------
-    ler_ultrassom: async (comando, argsString) =>
-      blocklyFunctions.enviarComando("ler_ultrassom", comando, argsString),
-    mover_frente: async (comando, argsString) =>
-      blocklyFunctions.enviarComando("mover_frente", comando, argsString),
-    mover_tras: async (comando, argsString) =>
-      blocklyFunctions.enviarComando("mover_tras", comando, argsString),
     parar_motor: async (comando, argsString) =>
       blocklyFunctions.enviarComando("parar_motor", comando, argsString),
+    parar_motor_esquerdo: async (comando, argsString) =>
+      blocklyFunctions.enviarComando("parar_motor_esquerdo", comando, argsString),
+    parar_motor_direito: async (comando, argsString) =>
+      blocklyFunctions.enviarComando("parar_motor_direito", comando, argsString),
 
+
+
+    // ----------- Funções Servo -------------------
     servo: async (comando, argsString) =>
       blocklyFunctions.enviarComando("servo", comando, argsString),
     servo360: async (comando, argsString) =>
       blocklyFunctions.enviarComando("servo360", comando, argsString),
+
+    // ----------- Funções Sensores -------------------
+    ler_ultrassom: async (comando, argsString) =>
+      blocklyFunctions.enviarComando("ler_ultrassom", comando, argsString),
+
+    // ----------- Funções Som -------------------
+    som_nota: async (comando, argsString) =>
+      blocklyFunctions.enviarComando("som_nota", comando, argsString),
 
     // ----------- Funções Serial -------------------
     serial_println_cmd: async (msg) => {
