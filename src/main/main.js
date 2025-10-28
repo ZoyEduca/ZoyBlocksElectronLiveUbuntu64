@@ -268,11 +268,18 @@ ipcMain.handle("enviar-comando-serial", (event, comando) =>
 // ----------------------------------------------------------------------------
 // ----------- Handlers do IPC para Executar blocos ---------------------------
 // ----------------------------------------------------------------------------
-
-ipcMain.handle("executar-codigo", (event, comando) =>
-  blocklyService.executarCodigo(comando)
-);
-
+ipcMain.handle("executar-codigo", async (event, comando) => {
+  try {
+    const resultado = await blocklyService.executarCodigo(comando);
+    return resultado;
+  } catch (err) {
+    console.error("[ERRO FATAL] Erro na execução de código:", err);
+    return {
+      status: false,
+      mensagem: `Erro interno no main process: ${err.message}`,
+    };
+  }
+});
 
 
 
