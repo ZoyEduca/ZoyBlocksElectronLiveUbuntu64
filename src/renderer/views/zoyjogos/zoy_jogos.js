@@ -32,6 +32,51 @@ const assetsToLoad = {
 // --- 2. DEFINIÇÃO DOS BLOCOS CUSTOMIZADOS E GERADORES (CORRIGIDO PARA BLOCKLY.JAVASCRIPT) ---
 
 function defineMazeBlocksAndGenerators() {
+    // --- NOVO BLOCO: Se caminho... Senão... (If-Else) ---
+    Blockly.Blocks['controls_if_else_path'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("se caminho")
+                .appendField(new Blockly.FieldDropdown([
+                    ["à frente", "FORWARD"],
+                    ["à esquerda", "LEFT"],
+                    ["à direita", "RIGHT"]
+                ]), "DIRECTION")
+                .appendField("livre");
+            this.appendStatementInput("DO")
+                .setCheck(null)
+                .appendField("fazer");
+            this.appendStatementInput("ELSE") // Novo Input para a condição 'Senão'
+                .setCheck(null)
+                .appendField("senão fazer"); // Novo Rótulo
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour(120); // Cor Verde (a mesma do 'Controle')
+            this.setTooltip("Se o caminho na direção especificada estiver livre, executa a primeira ação, senão, executa a segunda.");
+            this.setHelpUrl("");
+        }
+    };
+
+    // Gerador JavaScript para o bloco 'controls_if_else_path'
+    Blockly.JavaScript.forBlock['controls_if_else_path'] = function(block) {
+        const direction = block.getFieldValue('DIRECTION');
+
+        // Pega o código do bloco interno 'fazer'
+        let branchIf = Blockly.JavaScript.statementToCode(block, 'DO') || '';
+        
+        // Pega o código do bloco interno 'senão fazer'
+        let branchElse = Blockly.JavaScript.statementToCode(block, 'ELSE') || '';
+
+        // Prepara para indentações
+        const indentedIf = branchIf.trim().split('\n').map(line => line ? '  ' + line : '').join('\n');
+        const indentedElse = branchElse.trim().split('\n').map(line => line ? '  ' + line : '').join('\n');
+
+        // Gera o código JS: if (condition) { ... } else { ... }
+        // Note o uso de 'await' para chamar a função de sensor do jogo.
+        const code = `if (await window.isPath('${direction}')) {\n${indentedIf}\n} else {\n${indentedElse}\n}\n`;
+        return code;
+    };
+
     // --- BLOCO: Mover para frente ---
     Blockly.Blocks['maze_moveForward'] = {
         init: function() {

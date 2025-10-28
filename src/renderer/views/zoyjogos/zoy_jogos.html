@@ -197,7 +197,9 @@
         <category name="Controle" colour="#5CB85C">
             <block type="controls_repeat_simple"></block>
             <block type="controls_if_path"></block>
+            <block type="controls_if_else_path"></block>
         </category>
+        
     </xml>
 
     <!-- CRUCIAL: Carrega o script de lógica do Blockly e do jogo -->
@@ -215,11 +217,11 @@
             easy: {
                 size: 5,
                 layout: [
-                    [2, 1, 0, 1, 0], 
-                    [0, 1, 1, 1, 0],
-                    [0, 0, 0, 1, 1],
-                    [1, 1, 1, 0, 1],
-                    [0, 0, 1, 3, 1]  
+                    [0, 0, 0, 0, 0], 
+                    [0, 0, 0, 0, 0],
+                    [2, 1, 1, 1, 3], // Início (2) -> Caminho (1) -> Fim (3)
+                    [0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0] 
                 ]
             },
             medium: {
