@@ -20,6 +20,7 @@ cd ZoyBlocks_Electron_Live
 
 Certifique-se de ter o **Node.js** instalado (versão recomendada v22.19.0).\
 Depois, instale as dependências:
+https://nodejs.org/pt/download
 
 ``` bash
 npm install
