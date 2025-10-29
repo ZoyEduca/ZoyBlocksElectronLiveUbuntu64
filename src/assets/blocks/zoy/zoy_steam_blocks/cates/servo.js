@@ -83,14 +83,14 @@
     ]);
 
     // Geração de código Python para o bloco
-    Blockly.Python["servo"] = function (block) {
+    Blockly.JavaScript.forBlock["servo"] = function (block) {
       const nota = block.getFieldValue("PINOS");
       const tempo = block.getFieldValue("COMANDOS");
 
       return `servo("${tempo}","${nota}")\n`;
     };
     // Geração de código Python para o bloco
-    Blockly.Python["servo360"] = function (block) {
+    Blockly.JavaScript.forBlock["servo360"] = function (block) {
       const sentido = block.getFieldValue("SENTIDO");
       const pino = block.getFieldValue("PINOS");
       if (sentido === "HO") {

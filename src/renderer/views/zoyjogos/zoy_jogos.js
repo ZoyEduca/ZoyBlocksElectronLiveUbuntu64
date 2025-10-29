@@ -9,7 +9,7 @@ const { loadAssetsGroup } = window.electronAPI ? window.electronAPI.utils : { lo
 let workspaceMaze = null;
 
 
-// --- 1. DEFINIÇÃO DOS ASSETS DO BLOCKLY (Alinhado com a carga assíncrona) ---
+// --- 1. DEFINIÇÃO DOS ASSETS DO BLOCKLY (MUDADO PARA JAVASCRIPT) ---
 const assetsToLoad = {
     blocklyCore: [
         {
@@ -18,9 +18,9 @@ const assetsToLoad = {
             path: `${window.paths.blockly.core}blockly.min.js`,
         },
         {
-            name: "python_compressed", // Usaremos este gerador para simular JS
+            name: "javascript_compressed", // AGORA USANDO GERADOR JAVASCRIPT
             type: "js",
-            path: `${window.paths.blockly.core}python_compressed.js`,
+            path: `${window.paths.blockly.core}javascript_compressed.js`, // AGORA USANDO GERADOR JAVASCRIPT
         },
     ],
     blocklyMsg: [
@@ -29,9 +29,54 @@ const assetsToLoad = {
 };
 
 
-// --- 2. DEFINIÇÃO DOS BLOCOS CUSTOMIZADOS ---
+// --- 2. DEFINIÇÃO DOS BLOCOS CUSTOMIZADOS E GERADORES (CORRIGIDO PARA BLOCKLY.JAVASCRIPT) ---
 
 function defineMazeBlocksAndGenerators() {
+    // --- NOVO BLOCO: Se caminho... Senão... (If-Else) ---
+    Blockly.Blocks['controls_if_else_path'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("se caminho")
+                .appendField(new Blockly.FieldDropdown([
+                    ["à frente", "FORWARD"],
+                    ["à esquerda", "LEFT"],
+                    ["à direita", "RIGHT"]
+                ]), "DIRECTION")
+                .appendField("livre");
+            this.appendStatementInput("DO")
+                .setCheck(null)
+                .appendField("fazer");
+            this.appendStatementInput("ELSE") // Novo Input para a condição 'Senão'
+                .setCheck(null)
+                .appendField("senão fazer"); // Novo Rótulo
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour(120); // Cor Verde (a mesma do 'Controle')
+            this.setTooltip("Se o caminho na direção especificada estiver livre, executa a primeira ação, senão, executa a segunda.");
+            this.setHelpUrl("");
+        }
+    };
+
+    // Gerador JavaScript para o bloco 'controls_if_else_path'
+    Blockly.JavaScript.forBlock['controls_if_else_path'] = function(block) {
+        const direction = block.getFieldValue('DIRECTION');
+
+        // Pega o código do bloco interno 'fazer'
+        let branchIf = Blockly.JavaScript.statementToCode(block, 'DO') || '';
+        
+        // Pega o código do bloco interno 'senão fazer'
+        let branchElse = Blockly.JavaScript.statementToCode(block, 'ELSE') || '';
+
+        // Prepara para indentações
+        const indentedIf = branchIf.trim().split('\n').map(line => line ? '  ' + line : '').join('\n');
+        const indentedElse = branchElse.trim().split('\n').map(line => line ? '  ' + line : '').join('\n');
+
+        // Gera o código JS: if (condition) { ... } else { ... }
+        // Note o uso de 'await' para chamar a função de sensor do jogo.
+        const code = `if (await window.isPath('${direction}')) {\n${indentedIf}\n} else {\n${indentedElse}\n}\n`;
+        return code;
+    };
+
     // --- BLOCO: Mover para frente ---
     Blockly.Blocks['maze_moveForward'] = {
         init: function() {
@@ -45,7 +90,8 @@ function defineMazeBlocksAndGenerators() {
         }
     };
 
-    Blockly.Python['maze_moveForward'] = function(block) {
+    // CORREÇÃO: Usa Blockly.JavaScript.forBlock (V12 Style)
+    Blockly.JavaScript.forBlock['maze_moveForward'] = function(block) {
         // Gera o código JS que chama a função real do HTML, com espera (await)
         const code = `await window.moveForward();\n`;
         return code;
@@ -68,7 +114,8 @@ function defineMazeBlocksAndGenerators() {
         }
     };
 
-    Blockly.Python['maze_turn'] = function(block) {
+    // CORREÇÃO: Usa Blockly.JavaScript.forBlock (V12 Style)
+    Blockly.JavaScript.forBlock['maze_turn'] = function(block) {
         const direction = block.getFieldValue('DIRECTION');
         // Gera o código JS que chama a função real do HTML, com espera (await)
         const code = `await window.turn('${direction}');\n`;
@@ -92,23 +139,24 @@ function defineMazeBlocksAndGenerators() {
       }
     };
 
-   Blockly.Python['controls_repeat_simple'] = function(block) {
-    // pega o número de repetições (garante inteiro)
-    const repeats = Number(block.getFieldValue('TIMES')) || 0;
+    // CORREÇÃO: Usa Blockly.JavaScript.forBlock (V12 Style)
+    Blockly.JavaScript.forBlock['controls_repeat_simple'] = function(block) {
+        // pega o número de repetições (garante inteiro)
+        const repeats = Number(block.getFieldValue('TIMES')) || 0;
 
-    // obtém o código do bloco interno (já com quebras de linha)
-    let branch = Blockly.Python.statementToCode(block, 'DO') || '';
+        // obtém o código do bloco interno. ATENÇÃO: Usa Blockly.JavaScript.statementToCode
+        let branch = Blockly.JavaScript.statementToCode(block, 'DO') || '';
 
-    // remove última nova linha se existir
-    if (branch.endsWith('\n')) branch = branch.slice(0, -1);
+        // remove última nova linha se existir
+        if (branch.endsWith('\n')) branch = branch.slice(0, -1);
 
-    // indenta duas posições cada linha do corpo para ficar dentro do bloco { ... }
-    const indented = branch.split('\n').map(line => line ? '  ' + line : '').join('\n');
+        // indenta duas posições cada linha do corpo para ficar dentro do bloco { ... }
+        const indented = branch.split('\n').map(line => line ? '  ' + line : '').join('\n');
 
-    // gera loop JS assíncrono
-    const code = `for (let i = 0; i < ${repeats}; i++) {\n${indented}\n}\n`;
-    return code;
-};
+        // gera loop JS assíncrono
+        const code = `for (let i = 0; i < ${repeats}; i++) {\n${indented}\n}\n`;
+        return code;
+    };
 
     
     // --- BLOCO: If com verificação de caminho ---
@@ -133,29 +181,29 @@ function defineMazeBlocksAndGenerators() {
       }
     };
 
-   Blockly.Python['controls_if_path'] = function(block) {
-    const direction = block.getFieldValue('DIRECTION');
+    // CORREÇÃO: Usa Blockly.JavaScript.forBlock (V12 Style)
+    Blockly.JavaScript.forBlock['controls_if_path'] = function(block) {
+        const direction = block.getFieldValue('DIRECTION');
 
-    // obtém o código do bloco interno (já com quebras de linha)
-    let branch = Blockly.Python.statementToCode(block, 'DO') || '';
+        // obtém o código do bloco interno. ATENÇÃO: Usa Blockly.JavaScript.statementToCode
+        let branch = Blockly.JavaScript.statementToCode(block, 'DO') || '';
 
-    // remove nova linha final (se houver)
-    if (branch.endsWith('\n')) branch = branch.slice(0, -1);
+        // remove nova linha final (se houver)
+        if (branch.endsWith('\n')) branch = branch.slice(0, -1);
 
-    // indenta cada linha do bloco interno para ficar dentro do { ... }
-    const indented = branch.split('\n').map(line => line ? '  ' + line : '').join('\n');
+        // indenta cada linha do bloco interno para ficar dentro do { ... }
+        const indented = branch.split('\n').map(line => line ? '  ' + line : '').join('\n');
 
-    // Gera JS assíncrono (usa await para permitir chamadas await no corpo)
-    // Caso prefira que isPath seja síncrono, remova o `await` abaixo.
-    const code = `if (await window.isPath('${direction}')) {\n${indented}\n}\n`;
-    return code;
-};
-
+        // Gera JS assíncrono (usa await para permitir chamadas await no corpo)
+        // Caso prefira que isPath seja síncrono, remova o `await` abaixo.
+        const code = `if (await window.isPath('${direction}')) {\n${indented}\n}\n`;
+        return code;
+    };
     
 }
 
 
-// --- 3. INICIALIZAÇÃO DO WORKSPACE ---
+// --- 3. INICIALIZAÇÃO DO WORKSPACE (AJUSTE DE TIMING) ---
 
 function initBlocklyMaze() {
   const blocklyDiv = document.getElementById('blocklyGameWorkspace');
@@ -176,7 +224,9 @@ function initBlocklyMaze() {
   // Adiciona listener para atualizar o código gerado em tempo real
   // A função window.updateCodeDisplay está definida no zoy_jogosnovo.html
   window.workspaceMaze.addChangeListener(window.updateCodeDisplay);
-  window.updateCodeDisplay(); // Chamada inicial
+  
+  // CORREÇÃO DE TIMING: A chamada window.updateCodeDisplay() foi removida daqui, 
+  // pois será chamada apenas no final do DOMContentLoaded, após o carregamento assíncrono.
   
   const onResize = () => {
     if (window.workspaceMaze) {
@@ -257,24 +307,34 @@ window.stopProgram = function() {
 };
 
 
-// --- 5. EXECUÇÃO DA INICIALIZAÇÃO (Ponto de entrada) ---
+// --- 5. EXECUÇÃO DA INICIALIZAÇÃO (Ponto de entrada, AJUSTADO PARA CORRIGIR TIMING) ---
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
         if (window.electronAPI) {
-             // PASSO 1: Carrega os scripts do Blockly (Core e Python Generator)
+             // PASSO 1: Carrega os scripts do Blockly (Core e JavaScript Generator)
             await loadAssetsGroup(assetsToLoad.blocklyCore);
-            // PASSO 2: Agora que o Blockly (e o Python Generator) estão DEFINIDOS, registramos os blocos
+            
+            // CORREÇÃO: Cria a referência global ao gerador após o carregamento assíncrono.
+            window.jsGenerator = Blockly.JavaScript;
+            
+            // PASSO 2: Agora que o Blockly (e o JavaScript Generator) estão DEFINIDOS, registramos os blocos
             defineMazeBlocksAndGenerators(); 
             // PASSO 3: Carrega as mensagens de tradução (opcionalmente)
             await loadAssetsGroup(assetsToLoad.blocklyMsg);
         } else {
              // Fallback simples para ambiente de teste sem electron
              defineMazeBlocksAndGenerators(); 
+             // Se não usar o electronAPI, você deve garantir que o <script> javascript_compressed.js
+             // já foi carregado no HTML antes deste ponto, para que Blockly.JavaScript exista.
+             window.jsGenerator = Blockly.JavaScript; // Ainda assim, cria a referência.
         }
 
         // PASSO 4: Inicializa o Workspace e injeta na DOM
         initBlocklyMaze();
+        
+        // CORREÇÃO DE TIMING: Chama a atualização do código APÓS a injeção do workspace e a definição de window.jsGenerator.
+        window.updateCodeDisplay();
 
     } catch (error) {
         console.error("Erro durante a inicialização do Zoy Jogos:", error);

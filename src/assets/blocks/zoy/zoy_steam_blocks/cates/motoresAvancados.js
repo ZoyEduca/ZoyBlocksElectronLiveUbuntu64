@@ -248,69 +248,69 @@
       },
     ]);
 
-    // Geração de código Python
-    Blockly.Python["zoy_pwm_motor_esquerdo_frente"] = (block) =>
-      `motor_pwm_esquerdo_frente("MOTOR_ESQUERDO_FRENTE",${block.getFieldValue(
+    // Geração de código JS
+    Blockly.JavaScript.forBlock["zoy_pwm_motor_esquerdo_frente"] = (block) =>
+      `motor_esquerdo_frente("MOTOR_ESQUERDO_FRENTE",${block.getFieldValue(
         "PWM"
       )})\n`;
 
-    Blockly.Python["zoy_pwm_motor_esquerdo_tras"] = (block) =>
-      `motor_pwm_esquerdo_tras("MOTOR_ESQUERDO_TRAS",${block.getFieldValue(
+    Blockly.JavaScript.forBlock["zoy_pwm_motor_esquerdo_tras"] = (block) =>
+      `motor_esquerdo_tras("MOTOR_ESQUERDO_TRAS",${block.getFieldValue(
         "PWM"
       )})\n`;
 
-    Blockly.Python["zoy_pwm_motor_direito_frente"] = (block) =>
-      `motor_pwm_direito_frente("MOTOR_DIREITO_FRENTE",${block.getFieldValue(
+    Blockly.JavaScript.forBlock["zoy_pwm_motor_direito_frente"] = (block) =>
+      `motor_direito_frente("MOTOR_DIREITO_FRENTE",${block.getFieldValue(
         "PWM"
       )})\n`;
 
-    Blockly.Python["zoy_pwm_motor_direito_tras"] = (block) =>
-      `motor_pwm_direito_tras("MOTOR_DIREITO_TRAS",${block.getFieldValue(
+    Blockly.JavaScript.forBlock["zoy_pwm_motor_direito_tras"] = (block) =>
+      `motor_direito_tras("MOTOR_DIREITO_TRAS",${block.getFieldValue(
         "PWM"
       )})\n`;
 
     // Funções com porcentagem
-    Blockly.Python["zoy_percent_motor_esquerdo_frente"] = function (block) {
+    Blockly.JavaScript.forBlock["zoy_percent_motor_esquerdo_frente"] = function (block) {
       // Converte porcentagem (0-100) para valor PWM (0-255)
       const pwmConvert = Math.round((block.getFieldValue("VALUE") / 100) * 255);
-      return `motor_pwm_esquerdo_frente("MOTOR_ESQUERDO_FRENTE","${pwmConvert}")\n`;
+      return `motor_esquerdo_frente("MOTOR_ESQUERDO_FRENTE","${pwmConvert}")\n`;
     };
-    Blockly.Python["zoy_percent_motor_esquerdo_tras"] = function (block) {
+    Blockly.JavaScript.forBlock["zoy_percent_motor_esquerdo_tras"] = function (block) {
       // Converte porcentagem (0-100) para valor PWM (0-255)
       const pwmConvert = Math.round((block.getFieldValue("VALUE") / 100) * 255);
-      return `motor_pwm_esquerdo_tras("MOTOR_ESQUERDO_TRAS","${pwmConvert}")\n`;
+      return `motor_esquerdo_tras("MOTOR_ESQUERDO_TRAS","${pwmConvert}")\n`;
     };
-    Blockly.Python["zoy_percent_motor_direito_frente"] = function (block) {
+    Blockly.JavaScript.forBlock["zoy_percent_motor_direito_frente"] = function (block) {
       // Converte porcentagem (0-100) para valor PWM (0-255)
       const pwmConvert = Math.round((block.getFieldValue("VALUE") / 100) * 255);
-      return `motor_pwm_direito_frente("MOTOR_DIREITO_FRENTE","${pwmConvert}")\n`;
+      return `motor_direito_frente("MOTOR_DIREITO_FRENTE","${pwmConvert}")\n`;
     };
-    Blockly.Python["zoy_percent_motor_direito_tras"] = function (block) {
+    Blockly.JavaScript.forBlock["zoy_percent_motor_direito_tras"] = function (block) {
       // Converte porcentagem (0-100) para valor PWM (0-255)
       const pwmConvert = Math.round((block.getFieldValue("VALUE") / 100) * 255);
-      return `motor_pwm_direito_tras("MOTOR_DIREITO_TRAS","${pwmConvert}")\n`;
+      return `motor_direito_tras("MOTOR_DIREITO_TRAS","${pwmConvert}")\n`;
     };
 
-    Blockly.Python["zoy_motores_pinos_digital"] = function (block) {
+    Blockly.JavaScript.forBlock["zoy_motores_pinos_digital"] = function (block) {
       const pin = block.getFieldValue("PIN");
       const level = block.getFieldValue("LEVEL");
-      return `definir_pino_digital("${pin}", "${level}")\n`;
+      return `definir_pino_digital("DIGITAL_WRITE","${pin}, ${level}")\n`;
     };
 
     // Escolha com pinos dos motores
-    Blockly.Python["zoy_motores_pinos_pwm"] = function (block) {
+    Blockly.JavaScript.forBlock["zoy_motores_pinos_pwm"] = function (block) {
       const pin = block.getFieldValue("PIN");
       const value = block.getFieldValue("VALUE"); // Valor de 0 a 255
       // Assume que você terá uma função `definir_pino_pwm` no app.py
-      return `definir_pino_pwm("${pin}", ${value})\n`;
+      return `definir_pino_pwm("PWM_WRITE","${pin}, ${value}")\n`;
     };
 
-    Blockly.Python["zoy_motores_pinos_porcentagem"] = function (block) {
+    Blockly.JavaScript.forBlock["zoy_motores_pinos_porcentagem"] = function (block) {
       const pin = block.getFieldValue("PIN");
       const percentage = block.getFieldValue("VALUE");
       // Converte porcentagem (0-100) para valor PWM (0-255)
       const pwm_value = Math.round((percentage / 100) * 255);
-      return `definir_pino_pwm("${pin}", ${pwm_value})\n`;
+      return `definir_pino_pwm("PWM_WRITE","${pin}, ${pwm_value}")\n`;
     };
   };
 

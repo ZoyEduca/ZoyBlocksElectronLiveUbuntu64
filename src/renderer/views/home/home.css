@@ -254,7 +254,7 @@
 
 
 /* ------------- Código Python ---------------------------- */
-#codigoPython {
+#areaCodigo {
   background: white;
   padding: 10px;
   border: 1px solid #ccc;
@@ -268,14 +268,14 @@
   cursor: pointer; /* Mostra que é clicável */
 }
 
-#codigoPython.expanded {
+#areaCodigo.expanded {
   height: auto;
   max-height: 500px;
   overflow-y: auto;
 }
 
 /* Adiciona a seta no canto superior direito */
-#codigoPython::after {
+#areaCodigo::after {
   content: "▼"; /* seta para baixo */
   position: absolute;
   top: 5px;
@@ -286,7 +286,7 @@
 }
 
 /* Gira a seta para cima quando expandido */
-#codigoPython.expanded::after {
+#areaCodigo.expanded::after {
   content: "▲"; /* seta para cima */
 }
 

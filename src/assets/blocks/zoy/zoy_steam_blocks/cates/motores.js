@@ -106,25 +106,25 @@
     ]);
 
     // Geração de código Python
-    Blockly.Python["zoy_mover_frente"] = () =>
+    Blockly.JavaScript.forBlock["zoy_mover_frente"] = () =>
       'mover_frente("MOTOR_FRENTE","150,150")\n';
-    Blockly.Python["zoy_mover_tras"] = () =>
+    Blockly.JavaScript.forBlock["zoy_mover_tras"] = () =>
       'mover_tras("MOTOR_TRAS", "150,150")\n';
 
-    Blockly.Python["zoy_motor_esquerdo_frente"] = () =>
+    Blockly.JavaScript.forBlock["zoy_motor_esquerdo_frente"] = () =>
       'motor_esquerdo_frente("MOTOR_ESQUERDO_FRENTE", "150")\n';
-    Blockly.Python["zoy_motor_esquerdo_tras"] = () =>
+    Blockly.JavaScript.forBlock["zoy_motor_esquerdo_tras"] = () =>
       'motor_esquerdo_tras("MOTOR_ESQUERDO_TRAS", "150")\n';
-    Blockly.Python["zoy_motor_direito_frente"] = () =>
+    Blockly.JavaScript.forBlock["zoy_motor_direito_frente"] = () =>
       'motor_direito_frente("MOTOR_DIREITO_FRENTE", "150")\n';
-    Blockly.Python["zoy_motor_direito_tras"] = () =>
+    Blockly.JavaScript.forBlock["zoy_motor_direito_tras"] = () =>
       'motor_direito_tras("MOTOR_DIREITO_TRAS", "150")\n';
 
-    Blockly.Python["zoy_parar_motor_esquerdo"] = () =>
+    Blockly.JavaScript.forBlock["zoy_parar_motor_esquerdo"] = () =>
       'parar_motor_esquerdo("PARAR_ESQUERDO", "")\n';
-    Blockly.Python["zoy_parar_motor_direito"] = () =>
+    Blockly.JavaScript.forBlock["zoy_parar_motor_direito"] = () =>
       'parar_motor_direito("PARAR_DIREITO", "")\n';
-    Blockly.Python["zoy_parar_motores"] = () => 'parar_motor("PARAR", "0,0")\n';
+    Blockly.JavaScript.forBlock["zoy_parar_motores"] = () => 'parar_motor("PARAR", "0,0")\n';
   };
 
   const categoriaMotores = {

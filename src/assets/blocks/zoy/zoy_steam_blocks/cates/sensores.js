@@ -47,16 +47,16 @@
     ]);
 
     // Geração de código Python
-    Blockly.Python["zoy_ultrassom_distancia"] = function (block) {
+    Blockly.JavaScript.forBlock["zoy_ultrassom_distancia"] = function (block) {
       var trig = block.getFieldValue("TRIG");
       var echo = block.getFieldValue("ECHO");
       var code = `ler_ultrassom("ULTRASSOM","${trig}, ${echo}")\n`;
-      return [code, Blockly.Python.ORDER_ATOMIC];
+      return [code, Blockly.JavaScript.forBlock.ORDER_ATOMIC];
     };
 
-    Blockly.Python["sensor_seguidor_linha"] = function (block) {
+    Blockly.JavaScript.forBlock["sensor_seguidor_linha"] = function (block) {
       const pino = block.getFieldValue("PINO");
-      return [`ler_analogico('${pino}')`, Blockly.Python.ORDER_FUNCTION_CALL];
+      return [`ler_analogico('${pino}')`, Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL];
     };
   };
 

@@ -64,26 +64,26 @@
     ]);
 
     // ---------- Geradores Python ----------
-    Blockly.Python["ir_send"] = (block) => {
+    Blockly.JavaScript.forBlock["ir_send"] = (block) => {
       const msg =
-        Blockly.Python.valueToCode(block, "MSG", Blockly.Python.ORDER_ATOMIC) ||
+        Blockly.JavaScript.forBlock.valueToCode(block, "MSG", Blockly.JavaScript.forBlock.ORDER_ATOMIC) ||
         '""';
       return `ir_send(${msg})\n`;
     };
 
-    Blockly.Python["ir_receive"] = (block) => {
+    Blockly.JavaScript.forBlock["ir_receive"] = (block) => {
       const code = "ir_receive()";
-      return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+      return [code, Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL];
     };
 
-    Blockly.Python["ir_if_message"] = (block) => {
+    Blockly.JavaScript.forBlock["ir_if_message"] = (block) => {
       const msg =
-        Blockly.Python.valueToCode(block, "MSG", Blockly.Python.ORDER_ATOMIC) ||
+        Blockly.JavaScript.forBlock.valueToCode(block, "MSG", Blockly.JavaScript.forBlock.ORDER_ATOMIC) ||
         '""';
-      const statements = Blockly.Python.statementToCode(block, "DO");
+      const statements = Blockly.JavaScript.forBlock.statementToCode(block, "DO");
       return `if ir_receive() == ${msg}:\n${statements}`;
     };
-    Blockly.Python["ir_print"] = function (block) {
+    Blockly.JavaScript.forBlock["ir_print"] = function (block) {
       return "print(ir_receive())\n";
     };
   };

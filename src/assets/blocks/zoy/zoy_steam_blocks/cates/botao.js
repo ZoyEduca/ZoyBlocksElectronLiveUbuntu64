@@ -25,17 +25,17 @@
     ]);
 
     // Geração de código Python
-    Blockly.Python["zoy_botao"] = function () {
+    Blockly.JavaScript.forBlock["zoy_botao"] = function () {
       return [
         `ler_pino_digital("4", "INPUT_PULLUP")`,
-        Blockly.Python.ORDER_FUNCTION_CALL,
+        Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL,
       ];
     };
 
-    Blockly.Python["zoy_botao_debounce"] = function (block) {
+    Blockly.JavaScript.forBlock["zoy_botao_debounce"] = function (block) {
       return [
         `ler_botao_debounce("4", "INPUT_PULLUP")`,
-        Blockly.Python.ORDER_FUNCTION_CALL,
+        Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL,
       ];
     };
   };

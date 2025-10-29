@@ -232,14 +232,13 @@ void loop()
       }
     }
   }
-
   // Pisca LED_LEFT com millis()
   if (piscaLeftAtivo && millis() - tempoAnteriorLeft >= intervaloLedLeft)
   {
     tempoAnteriorLeft = millis();
     estadoLedLeft = !estadoLedLeft;
     digitalWrite(LED_LEFT, estadoLedLeft);
-    if (!estadoLedLeft) // só conta quando apaga
+    if (!estadoLedLeft)
     {
       piscaLeftRestantes--;
       if (piscaLeftRestantes <= 0)
@@ -250,6 +249,7 @@ void loop()
     }
   }
 
+  
   // Pisca LED_RIGHT com millis()
   if (piscaRightAtivo && millis() - tempoAnteriorRight >= intervaloLedRight)
   {
@@ -321,8 +321,7 @@ void processarComando(String cmd)
   argumentos_temp.trim();
 
   // === NOVO: SOM (PWM, TEMPO) ===
-  if (comando_temp == "SOM")
-  {
+  if (comando_temp == "SOM") {
     int sep1 = argumentos_temp.indexOf(','); // posição do 1º separador
     if (sep1 == -1)
     {
@@ -346,8 +345,7 @@ void processarComando(String cmd)
     return;
   }
   // === NOVO: PAUSA (TEMPO) - AGORA NÃO-BLOQUEANTE ===
-  if (comando_temp == "PAUSA")
-  {
+  if (comando_temp == "PAUSA"){
     argumentos_temp.trim();
     unsigned long valorTempo = (unsigned long)argumentos_temp.toInt();
     
@@ -361,8 +359,7 @@ void processarComando(String cmd)
   }
 
   // === NOVO: DIGITAL_WRITE (pinos digitais) ===
-  if (comando_temp == "DIGITAL_WRITE")
-  {
+  if (comando_temp == "DIGITAL_WRITE") {
     int sep_arg = argumentos_temp.indexOf(',');
     if (sep_arg == -1)
     {
@@ -413,46 +410,177 @@ void processarComando(String cmd)
   }
 
   // === NOVO: PWM_WRITE (pinos PWM) ===
-  if (comando_temp == "PWM_WRITE")
-  {
-    // ... (lógica inalterada)
-    Serial.println("OK");
+  if (comando_temp == "PWM_WRITE") {
+   int sep_arg = argumentos_temp.indexOf(',');
+    if (sep_arg == -1)
+    {
+      Serial.println("ERRO:ARG_INVALIDO_PWM_WRITE");
+      return;
+    }
+    String pinoStr = argumentos_temp.substring(0, sep_arg);
+    String valorStr = argumentos_temp.substring(sep_arg + 1);
+
+    pinoStr.trim();
+    valorStr.trim();
+
+    // Converte o pino para int (ex: "D3" -> 3; "9" -> 9)
+    int pino = -1;
+    if (pinoStr.startsWith("D"))
+    {
+      pino = pinoStr.substring(1).toInt();
+    }
+    else
+    {
+      pino = pinoStr.toInt();
+    }
+
+    int valor = valorStr.toInt();
+
+    // Verifica se o valor PWM é válido (0-255)
+    // (Pinos PWM geralmente 3, 5, 6, 9, 10, 11 no Arduino UNO/Nano)
+    if (pino != -1 && valor >= 0 && valor <= 255)
+    {
+      pinMode(pino, OUTPUT); // Garante que o pino está configurado como OUTPUT
+      analogWrite(pino, valor);
+      Serial.println("OK");
+    }
+    else
+    {
+      Serial.println("ERRO:PARAMETROS_PWM_WRITE_INVALIDOS");
+    }
     return;
   }
 
   // === LER SENSOR ULTRASSOM ===
-  if (comando_temp == "ULTRASSOM")
-  {
-    // ... (lógica inalterada)
-    return; 
+  if (comando_temp == "ULTRASSOM") {
+    int primeiro_virgula = argumentos_temp.indexOf(',');
+    if (primeiro_virgula != -1)
+    {
+      int trigPin = argumentos_temp.substring(0, primeiro_virgula).toInt();
+      int echoPin = argumentos_temp.substring(primeiro_virgula + 1).toInt();
+
+      // CORREÇÃO: 'arguments_temp' para 'argumentos_temp'
+      if (trigPin == 0 && argumentos_temp.substring(0, primeiro_virgula) != "0" ||
+          echoPin == 0 && argumentos_temp.substring(primeiro_virgula + 1) != "0")
+      {
+        Serial.println("ERRO:PINOS_ULTRASSOM_INVALIDOS");
+        return;
+      }
+
+      float distancia = ler_ultrassom(trigPin, echoPin);
+      Serial.print("DISTANCIA:");
+      Serial.println(distancia, 2); // Imprime a distância com 2 casas decimais
+      // REMOVIDO: Serial.println("OK"); para evitar linhas extras
+    }
+    else
+    {
+      Serial.println("ERRO:PARAMETROS_ULTRASSOM_AUSENTES"); // Se faltar a vírgula
+    }
+    return; // Importante: Sai da função processarComando após lidar com o comando ULTRASSOM
   }
 
   // === NOVO: DIGITAL_READ (ler pino digital) ===
-  if (comando_temp == "DIGITAL_READ")
-  {
-    // ... (lógica inalterada)
-    return; 
+  if (comando_temp == "DIGITAL_READ") {
+    int sep_arg = argumentos_temp.indexOf(',');
+    if (sep_arg == -1)
+    {
+      Serial.println("ERRO:ARG_INVALIDO_DIGITAL_READ");
+      return;
+    }
+    String pinoStr = argumentos_temp.substring(0, sep_arg);
+    String modoStr = argumentos_temp.substring(sep_arg + 1);
+
+    pinoStr.trim();
+    modoStr.trim();
+
+    int pino = pinoStr.toInt(); // Pega o número do pino diretamente
+
+    int modo = -1;
+    if (modoStr == "INPUT")
+    {
+      modo = INPUT;
+    }
+    else if (modoStr == "INPUT_PULLUP")
+    {
+      modo = INPUT_PULLUP;
+    }
+    else
+    {
+      Serial.println("ERRO:MODO_INVALIDO");
+      return;
+    }
   }
 
   // --- COMANDO BOTAO_DEBOUNCE (usa a função de debounce assíncrona) ---
   if (comando_temp == "BOTAO_DEBOUNCE")
   {
-    // ... (lógica inalterada)
+   int sep_arg = argumentos_temp.indexOf(',');
+    if (sep_arg == -1)
+    {
+      Serial.println("ERRO:ARG_INVALIDO_BOTAO_DEBOUNCE");
+      return;
+    }
+    String pinoStr = argumentos_temp.substring(0, sep_arg);
+    String modoStr = argumentos_temp.substring(sep_arg + 1);
+
+    pinoStr.trim();
+    modoStr.trim();
+
+    int pino = pinoStr.toInt();
+
+    int modo = -1;
+    if (modoStr == "INPUT")
+    {
+      modo = INPUT;
+    }
+    else if (modoStr == "INPUT_PULLUP")
+    {
+      modo = INPUT_PULLUP;
+    }
+    else
+    {
+      Serial.println("ERRO:MODO_INVALIDO");
+      return;
+    }
+
+    if (pino >= 0 && pino <= 19 && modo != -1)
+    {
+      pinMode(pino, modo);
+      botao_zoy_debounce = pino;
+      debounceActive = true;
+
+      // Força uma leitura inicial para não retornar valor antigo
+      debouncedButtonRead(pino);
+
+      Serial.print("BOTAO_DEBOUNCE_VALOR:");
+      Serial.println(button_zoy_State); // Agora é atualizado constantemente
+    }
+    else
+    {
+      Serial.println("ERRO:PARAMETROS_BOTAO_DEBOUNCE_INVALIDOS");
+    }
     return;
   }
 
   // === LER SENSOR ANALÓGICO (IR, LDR, Potenciômetro, etc.) ===
-  if (comando_temp == "ANALOG_READ")
-  {
-    // ... (lógica inalterada)
-    return; 
+  if (comando_temp == "ANALOG_READ")  {
+  
+    int valor = lerAnalogico(argumentos_temp);
+    if (valor != -1)
+    {                                // -1 significa pino inválido
+      Serial.print("ANALOG_VALOR:"); // Resposta formatada para o Python
+      Serial.println(valor);
+      // REMOVIDO: Serial.println("OK"); para evitar linhas extras
+    }
+    else
+    {
+      Serial.println("ERRO:PINO_ANALOGICO_INVALIDO"); // Mensagem de erro mais específica
+    }
+    return; // Sai da função após processar o comando
   }
-
   // === LED_TREZE ===
-  if (comando_temp == "LED_TREZE")
-  {
-    if (comando_temp == "LED_TREZE")
-  {
+  if (comando_temp == "LED_TREZE") {
+  
     if (argumentos_temp == "HIGH")
     {
       digitalWrite(LED_13, HIGH);
@@ -482,12 +610,8 @@ void processarComando(String cmd)
     }
     return;
   }
-
-  }
-
   // === LED LEFT ===
-  if (comando_temp == "LED_LEFT")
-  {
+  if (comando_temp == "LED_LEFT")  {
     if (argumentos_temp == "HIGH")
     {
       digitalWrite(LED_LEFT, HIGH);
@@ -502,10 +626,10 @@ void processarComando(String cmd)
     {
       Serial.println("ERRO:ARG_INVALIDO");
     }
+    return;
   }
   // === LED RIGHT ===
-  if (comando_temp == "LED_RIGHT")
-  {
+  if (comando_temp == "LED_RIGHT")  {
     if (argumentos_temp == "HIGH")
     {
       digitalWrite(LED_RIGHT, HIGH);
@@ -522,10 +646,8 @@ void processarComando(String cmd)
     }
     return;
   }
-
   // === ACIONA OS PINOS DO MOTOR (D3, D5, D6, D11) ===
-  if (comando_temp == "D3" || comando_temp == "D5" || comando_temp == "D6" || comando_temp == "D11")
-  {
+  if (comando_temp == "D3" || comando_temp == "D5" || comando_temp == "D6" || comando_temp == "D11")  {
     int pinoAlvo = comando_temp.substring(1).toInt(); // Extrai o número do pino (ex: de "D3" pega 3)
     if (argumentos_temp == "HIGH")
     {
@@ -543,10 +665,8 @@ void processarComando(String cmd)
     }
     return;
   }
-
   // === MOTOR ESQUERDO_FRENTE ===
-  if (comando_temp == "MOTOR_ESQUERDO_FRENTE")
-  {
+  if (comando_temp == "MOTOR_ESQUERDO_FRENTE")  {
     int velA = argumentos_temp.toInt();
     analogWrite(MOTOR_E1, velA);
     analogWrite(MOTOR_E2, 0);
@@ -554,8 +674,7 @@ void processarComando(String cmd)
     return;
   }
   // === MOTOR ESQUERDO_TRAS ===
-  if (comando_temp == "MOTOR_ESQUERDO_TRAS")
-  {
+  if (comando_temp == "MOTOR_ESQUERDO_TRAS")  {
     int velA = argumentos_temp.toInt();
     analogWrite(MOTOR_E1, 0);
     analogWrite(MOTOR_E2, velA);
@@ -563,8 +682,7 @@ void processarComando(String cmd)
     return;
   }
   // === MOTOR DIREITO_FRENTE ===
-  if (comando_temp == "MOTOR_DIREITO_FRENTE")
-  {
+  if (comando_temp == "MOTOR_DIREITO_FRENTE")  {
      int velA = argumentos_temp.toInt();
     analogWrite(MOTOR_D1, velA);
     analogWrite(MOTOR_D2, 0);
@@ -572,18 +690,15 @@ void processarComando(String cmd)
     return;
   }
   // === MOTOR DIREITO_TRAS ===
-  if (comando_temp == "MOTOR_DIREITO_TRAS")
-  {
+  if (comando_temp == "MOTOR_DIREITO_TRAS")  {
     int velA = argumentos_temp.toInt();
     analogWrite(MOTOR_D1, 0);
     analogWrite(MOTOR_D2, velA);
     Serial.println("OK");
     return;
   }
-
   // === MOTOR FRENTE ===
-  if (comando_temp == "MOTOR_FRENTE")
-  {
+  if (comando_temp == "MOTOR_FRENTE")  {
    int sep = argumentos_temp.indexOf(',');
     if (sep == -1)
     {
@@ -599,10 +714,8 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
-
   // === MOTOR TRAS ===
-  if (comando_temp == "MOTOR_TRAS")
-  {
+  if (comando_temp == "MOTOR_TRAS")  {
     int sep = argumentos_temp.indexOf(',');
     if (sep == -1)
     {
@@ -618,10 +731,8 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
-
   // === PARAR TODOS OS MOTORES ===
-  if (comando_temp == "PARAR")
-  {
+  if (comando_temp == "PARAR")  {
     analogWrite(MOTOR_E1, 0);
     analogWrite(MOTOR_E2, 0);
     analogWrite(MOTOR_D1, 0);
@@ -629,23 +740,22 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
-
   // === PARAR MOTOR Esquerdo ou Direito ===
-  if (comando_temp == "PARAR_ESQUERDO")
-  {
-    // ... (lógica inalterada)
+  if (comando_temp == "PARAR_ESQUERDO")  {
+    analogWrite(MOTOR_E1, 0);
+    analogWrite(MOTOR_E2, 0);
+    Serial.println("OK");
     return;
   }
 
-  if (comando_temp == "PARAR_DIREITO")
-  {
-    // ... (lógica inalterada)
+  if (comando_temp == "PARAR_DIREITO")  {
+       analogWrite(MOTOR_D1, 0);
+    analogWrite(MOTOR_D2, 0);
+    Serial.println("OK");
     return;
   }
-
   // === AGUARDA:N segundos - AGORA NÃO-BLOQUEANTE ===
-  if (comando_temp == "AGUARDA")
-  {
+  if (comando_temp == "AGUARDA")  {
     int segundos = argumentos_temp.toInt();
     
     pausaAtiva = true;
@@ -654,39 +764,56 @@ void processarComando(String cmd)
     Serial.println("OK_AGUARDA_INICIO"); // Resposta imediata, Node.js aguarda PAUSA_FIM
     return;
   }
-
   // === BEEP:N ms - AGORA NÃO-BLOQUEANTE ===
-  if (comando_temp == "BEEP")
-  {
+  if (comando_temp == "BEEP") {
     int duracao = argumentos_temp.toInt();
     // REMOVIDO: digitalWrite(BUZZER, HIGH); delay(duracao); digitalWrite(BUZZER, LOW);
     tone(BUZZER, 1000, duracao); // Usa tone com duração
     Serial.println("OK_BEEP");
     return;
   }
-
   // === LED_PISCA_LEFT ===
-  if (comando_temp == "LED_PISCA_LEFT")
-  {
-    // ... (lógica inalterada, já era assíncrona)
+  if (comando_temp == "LED_PISCA_LEFT") {
+    int vezes = argumentos_temp.toInt();
+    if (vezes > 0)
+    {
+      piscaLeftAtivo = true;
+      piscaLeftRestantes = vezes;
+      tempoAnteriorLeft = millis();
+      estadoLedLeft = LOW; // Inicia apagado para piscar
+      digitalWrite(LED_LEFT, estadoLedLeft);
+      Serial.println("OK");
+    }
+    else
+    {
+      Serial.println("ERRO:ARG_INVALIDO");
+    }
     return;
   }
-
   // === LED_PISCA_RIGHT ===
-  if (comando_temp == "LED_PISCA_RIGHT")
-  {
-    // ... (lógica inalterada, já era assíncrona)
+  if (comando_temp == "LED_PISCA_RIGHT")  {
+    int vezes = argumentos_temp.toInt();
+    if (vezes > 0)
+    {
+      piscaRightAtivo = true;
+      piscaRightRestantes = vezes;
+      tempoAnteriorRight = millis();
+      estadoLedRight = LOW; // Inicia apagado para piscar
+      digitalWrite(LED_RIGHT, estadoLedRight);
+      Serial.println("OK");
+    }
+    else
+    {
+      Serial.println("ERRO:ARG_INVALIDO");
+    }
     return;
   }
-
   // === Comando ZOY de firmware ===
-  if (comando_temp == "ZOY" && argumentos_temp == "ZOY")
-  {
+  if (comando_temp == "ZOY" && argumentos_temp == "ZOY") {
     Serial.println("FIRMWARE:ZOY_STEAM:v0.8.0"); // Versão atualizada
     return;
   }
-  
-  // === SERVO MOTOR <A:9> (Abrir a garra) - AGORA NÃO-BLOQUEANTE ===
+   // === SERVO MOTOR <A:9> (Abrir a garra) - AGORA NÃO-BLOQUEANTE ===
   if (comando_temp == "A"){
      int servoPin = argumentos_temp.toInt();
      pinMode(servoPin, OUTPUT);
@@ -701,7 +828,6 @@ void processarComando(String cmd)
      Serial.println("OK_ABRIR_GARRA_INICIO"); // Resposta imediata, Node.js aguarda SERVO_FIM
      return;
   } 
-
   // === SERVO MOTOR <C:9> (Fechar a garra) - AGORA NÃO-BLOQUEANTE ===
   else if (comando_temp == "C") {
      int servoPin = argumentos_temp.toInt();
@@ -717,23 +843,65 @@ void processarComando(String cmd)
      Serial.println("OK_FECHAR_GARRA_INICIO"); // Resposta imediata, Node.js aguarda SERVO_FIM
      return;
   }
-  
   // === SERVO MOTOR 360 GIRAR <HO:PINO>===
   else if (comando_temp == "HO") {
-    // ... (lógica inalterada)
+    int sep1 = argumentos_temp.indexOf(','); // posição do 1º separador
+    if (sep1 == -1)
+    {
+      Serial.println("ERRO:ARG_INVALIDO_SOM");
+      return;
+    }
+    String nivelStr = argumentos_temp.substring(0, sep1);
+    String tempoStr = argumentos_temp.substring(sep1 + 1);
+
+    nivelStr.trim();
+    tempoStr.trim();
+    servo360Pin = (unsigned int)nivelStr.toInt();
+    unsigned int velocidade = (unsigned int)tempoStr.toInt();
+    
+    pinMode(servo360Pin, OUTPUT);
+    digitalWrite(servo360Pin, LOW);
+    pulsoServo360 = velocidade;
+
+    char msg[50];
+    sprintf(msg, "Servo do pino %d ROTAÇÃO HORÁRIA", servo360Pin);
+    Serial.println(msg);
     return;
+
 
   // === SERVO MOTOR 360 GIRAR <AH:PINO>===
   } else if (comando_temp == "AH") {
-    // ... (lógica inalterada)
+    int sep1 = argumentos_temp.indexOf(','); // posição do 1º separador
+    if (sep1 == -1)
+    {
+      Serial.println("ERRO:ARG_INVALIDO_SOM");
+      return;
+    }
+    String nivelStr = argumentos_temp.substring(0, sep1);
+    String tempoStr = argumentos_temp.substring(sep1 + 1);
+
+    nivelStr.trim();
+    tempoStr.trim();
+    servo360Pin = (unsigned int)nivelStr.toInt();
+    unsigned int velocidade = (unsigned int)tempoStr.toInt();
+    pulsoServo360 = velocidade;
+    char msg[50];
+    sprintf(msg, "Servo do pino %d ROTAÇÃO ANTIHORÁRIA", servo360Pin);
+    Serial.println(msg);
     return;
 
   // === SERVO MOTOR 360 PARAR <P:PINO>===
   } else if (comando_temp == "P") {
-    // ... (lógica inalterada)
-    return;
-  }
+    servo360Pin = argumentos_temp.toInt(); // global
+    pinMode(servo360Pin, OUTPUT);
+    digitalWrite(servo360Pin, LOW);
+    pulsoServo360 = 1500; // parar
 
+    char msg[50];
+    sprintf(msg, "Servo do pino %d PARAR ROTAÇÃO", servo360Pin);
+    Serial.println(msg);
+    return;
+}
   // Se o comando não foi reconhecido
   Serial.println("ERRO:COMANDO_INVALIDO");
 }

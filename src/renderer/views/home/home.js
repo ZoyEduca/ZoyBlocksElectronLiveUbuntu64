@@ -19,14 +19,19 @@ const assetsToLoad = {
   ],
   blocklyCore: [
     {
-      name: "blockly_min",
+      name: "blockly_compressed",
       type: "js",
-      path: `${window.paths.blockly.core}blockly.min.js`,
+      path: `${window.paths.blockly.core}blockly_compressed.js`,
     },
     {
-      name: "python_compressed",
+      name: "blocks_compressed",
       type: "js",
-      path: `${window.paths.blockly.core}python_compressed.js`,
+      path: `${window.paths.blockly.core}blocks_compressed.js`,
+    },
+    {
+      name: "javascript_compressed",
+      type: "js",
+      path: `${window.paths.blockly.core}javascript_compressed.js`,
     },
   ],
   blocklyMsg: [
@@ -35,7 +40,7 @@ const assetsToLoad = {
     { name: "pt-br", type: "js", path: `${window.paths.blockly.msg}pt-br.js` },
   ],
   blocksDevice: [
-    //Blocos basicos
+    // Blocos basicos
     {
       name: "basicBlocks",
       type: "js",
@@ -48,11 +53,6 @@ const assetsToLoad = {
       path: `${window.paths.blocks_device.basic_blocks}cates/controle.js`,
     },
     {
-      name: "funcao_basicBlocks",
-      type: "js",
-      path: `${window.paths.blocks_device.basic_blocks}cates/funcao.js`,
-    },
-    {
       name: "logica_basicBlocks",
       type: "js",
       path: `${window.paths.blocks_device.basic_blocks}cates/logica.js`,
@@ -63,19 +63,24 @@ const assetsToLoad = {
       path: `${window.paths.blocks_device.basic_blocks}cates/matematica.js`,
     },
     {
-      name: "serial_basicBlocks",
-      type: "js",
-      path: `${window.paths.blocks_device.basic_blocks}cates/serial.js`,
-    },
-    {
       name: "texto_basicBlocks",
       type: "js",
       path: `${window.paths.blocks_device.basic_blocks}cates/texto.js`,
     },
     {
-      name: "variaveis_basicBlocks",
+      name: "serial_basicBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.basic_blocks}cates/serial.js`,
+    },
+    {
+      name: "variavel_basicBlocks",
       type: "js",
       path: `${window.paths.blocks_device.basic_blocks}cates/variaveis.js`,
+    },
+    {
+      name: "funcao_basicBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.basic_blocks}cates/funcao.js`,
     },
     // blocos do zoySteamBlocks
     {
@@ -90,24 +95,9 @@ const assetsToLoad = {
       path: `${window.paths.blocks_device.zoy_steam_blocks}cates/evento.js`,
     },
     {
-      name: "botao_zoySteamBlocks",
-      type: "js",
-      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/botao.js`,
-    },
-    {
-      name: "comunicacaoInfra_zoySteamBlocks",
-      type: "js",
-      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/comunicacaoInfra.js`,
-    },
-    {
       name: "luz_zoySteamBlocks",
       type: "js",
       path: `${window.paths.blocks_device.zoy_steam_blocks}cates/luz.js`,
-    },
-    {
-      name: "infravermelho_zoySteamBlocks",
-      type: "js",
-      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/infravermelho.js`,
     },
     {
       name: "motores_zoySteamBlocks",
@@ -120,14 +110,24 @@ const assetsToLoad = {
       path: `${window.paths.blocks_device.zoy_steam_blocks}cates/motoresAvancados.js`,
     },
     {
+      name: "sensores_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/sensores.js`,
+    },
+    {
+      name: "botao_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/botao.js`,
+    },
+    {
       name: "pinosLivres_zoySteamBlocks",
       type: "js",
       path: `${window.paths.blocks_device.zoy_steam_blocks}cates/pinosLivres.js`,
     },
     {
-      name: "sensores_zoySteamBlocks",
+      name: "som_zoySteamBlocks",
       type: "js",
-      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/sensores.js`,
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/som.js`,
     },
     {
       name: "servo_zoySteamBlocks",
@@ -135,9 +135,14 @@ const assetsToLoad = {
       path: `${window.paths.blocks_device.zoy_steam_blocks}cates/servo.js`,
     },
     {
-      name: "som_zoySteamBlocks",
+      name: "infravermelho_zoySteamBlocks",
       type: "js",
-      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/som.js`,
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/infravermelho.js`,
+    },
+    {
+      name: "comunicacaoInfra_zoySteamBlocks",
+      type: "js",
+      path: `${window.paths.blocks_device.zoy_steam_blocks}cates/comunicacaoInfra.js`,
     },
   ],
   images: [
@@ -160,7 +165,6 @@ const assetsToLoad = {
     },
   ],
 };
-
 // ----------------------------------------------------------------------------
 // ----------- Importações Iniciais da página ---------------------------------
 // ----------------------------------------------------------------------------
@@ -180,6 +184,7 @@ async function initializeImports() {
 
     // Carrega Blocos de dispositivos
     await loadAssetsGroup([...assetsToLoad.blocksDevice]);
+
   } catch (error) {
     console.error("❌ Erro ao inicializar Importações:", error);
   }
@@ -196,7 +201,7 @@ async function createWorkspace(toolbox) {
   try {
     // Inicializa workspace Blockly
     workspace = Blockly.inject("blocklyDiv", {
-      toolbox,
+      toolbox: toolbox,
       horizontalLayout: false,
       toolboxPosition: "start",
       media: mediaPath,
@@ -262,12 +267,12 @@ async function atualizarWorkspace(selectPlaca) {
 }
 
 // ----------------------------------------------------------------------------
-// ----------- Aréa de código em python ---------------------------------------
+// ----------- Aréa de código em Javascript ---------------------------------------
 // ----------------------------------------------------------------------------
 // Atualiza espaço de código de acordo com a manipulção do blocos no workspace
-function atualizarCodigoPython() {
-  const codigo = Blockly.Python.workspaceToCode(workspace);
-  document.getElementById("codigoPython").textContent =
+function atualizarAreaCodigo() {
+  const codigo = Blockly.JavaScript.workspaceToCode(workspace);
+  document.getElementById("areaCodigo").textContent =
     codigo || "# Nenhum código gerado.";
 }
 
@@ -281,7 +286,7 @@ function configurarAtualizacaoCodigo() {
         event.type === Blockly.Events.BLOCK_DELETE ||
         event.type === Blockly.Events.BLOCK_MOVE
       ) {
-        atualizarCodigoPython(); // Atualiza o código quando um bloco for adicionado ou modificado
+        atualizarAreaCodigo(); // Atualiza o código quando um bloco for adicionado ou modificado
       }
     });
   } else {
@@ -435,7 +440,7 @@ async function toggleConexao() {
   if (conectado) {
     // Desconectar
     const resposta = await window.electronAPI.desconectarPorta();
-    if (resposta.status) {
+  if (resposta.status) {
       alert(resposta.mensagem); // Exibe mensagem de sucesso
 
       conectado = false;
@@ -455,19 +460,19 @@ async function toggleConexao() {
       document.getElementById("btnConectar").textContent = "Desconectar";
       document.getElementById("btnConectar").classList.remove("btn-warning");
       document.getElementById("btnConectar").classList.add("btn-danger");
-    } else {
-      alert(`Erro ao conectar: ${resposta.mensagem}`);
-    }
+  } else {
+    alert(`Erro ao conectar: ${resposta.mensagem}`);
   }
+}
 }
 window.toggleConexao = toggleConexao;
 
 async function executarCodigo() {
-  const preElement = document.getElementById("codigoPython");
-  const codigoPython = preElement?.textContent?.trim();
+  const preElement = document.getElementById("areaCodigo");
+  const areaCodigo = preElement?.textContent?.trim();
 
-  if (!codigoPython || codigoPython.includes("Nenhum código gerado")) {
-    alert("Nenhum código Python válido foi gerado.");
+  if (!areaCodigo || areaCodigo.includes("Nenhum código gerado")) {
+    alert("Nenhum código Javascript válido foi gerado.");
     return;
   }
 
@@ -478,11 +483,12 @@ async function executarCodigo() {
   }
 
   try {
-    const resultado = await window.electronAPI.executarCodigo(codigoPython);
+    const resultado = await window.electronAPI.executarCodigo(areaCodigo);
 
     if (!resultado.status) {
-      exibirLogNoTerminal("[ERRO] Ocorreu um erro ao executar o comando. Por favor, reinicie a aplicação. Caso o problema persista, entre em contato com a equipe de desenvolvimento.");
+      exibirLogNoTerminal(`[ERRO] ${resultado.mensagem || "Falha desconhecida"}`);
     }
+
 
     // Exibir logs no console e no terminal
     if (Array.isArray(resultado.logs)) {
@@ -557,10 +563,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   const selectPlaca = document.getElementById("selectPlaca");
   await atualizarWorkspace(selectPlaca);
 
-  // Expandir área do código Python
-  const pre = document.getElementById("codigoPython");
+  // Expandir área do código Javascript
+  const pre = document.getElementById("areaCodigo");
   pre.addEventListener("click", function () {
-    const preElement = document.getElementById("codigoPython");
+    const preElement = document.getElementById("areaCodigo");
     preElement.classList.toggle("expanded");
   });
 

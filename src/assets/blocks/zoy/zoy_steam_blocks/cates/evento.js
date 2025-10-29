@@ -16,8 +16,8 @@
       },
     ]);
 
-    // Geração de código Python
-    Blockly.Python["iniciar_zoy_steam"] = () => `iniciar_zoy("ZOY", "ZOY")\n`;
+    // Geração de código js
+    Blockly.JavaScript.forBlock["iniciar_zoy_steam"] = () => `iniciar_zoy("ZOY", "ZOY")\n`;
   };
 
   const categoriaEventos = {

@@ -77,21 +77,21 @@
     ]);
 
     // Geração de código Python
-    Blockly.Python["ir_read"] = (block) => {
+    Blockly.JavaScript.forBlock["ir_read"] = (block) => {
       const pin = block.getFieldValue("PIN");
       const code = `ir_read("${pin}")`;
-      return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+      return [code, Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL];
     };
 
-    Blockly.Python["ir_value"] = (block) => {
+    Blockly.JavaScript.forBlock["ir_value"] = (block) => {
       const pin = block.getFieldValue("PIN");
       const code = `ir_value("${pin}")`;
-      return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+      return [code, Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL];
     };
 
-    Blockly.Python["ir_if_detect"] = (block) => {
+    Blockly.JavaScript.forBlock["ir_if_detect"] = (block) => {
       const pin = block.getFieldValue("PIN");
-      const statements = Blockly.Python.statementToCode(block, "DO");
+      const statements = Blockly.JavaScript.forBlock.statementToCode(block, "DO");
       return `if ir_read("${pin}"):\n${statements}`;
     };
   };

@@ -66,14 +66,14 @@
     ]);
 
     // Geração de código Python para o bloco
-    Blockly.Python["som_nota"] = function (block) {
+    Blockly.JavaScript.forBlock["som_nota"] = function (block) {
       const nota = block.getFieldValue("NOTA");
       const tempo = block.getFieldValue("TEMPO");
 
       return `som_nota("SOM","${nota},${tempo}")\n`;
     };
     // Geração de código Python para o bloco
-    Blockly.Python["pausa"] = function (block) {
+    Blockly.JavaScript.forBlock["pausa"] = function (block) {
       const tempo = block.getFieldValue("TEMPO");
 
       return `pausa("PAUSA","${tempo}")\n`;
