@@ -41,7 +41,6 @@ comandoInput.addEventListener("keyup", (event) => {
 });
 
 // Escuta eventos vindos do main.js
-onRespostaSerial((data) => appendMessage(data, "message-type-received"));
 onDadosSerial((data) => appendMessage(data, "message-type-received"));
 onStatusSerial((data) =>
   appendMessage("Status: " + data.mensagem, "message-type-system")
