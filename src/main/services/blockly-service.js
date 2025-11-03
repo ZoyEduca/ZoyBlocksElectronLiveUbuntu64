@@ -65,6 +65,8 @@ async function executarCodigo(codigoJavaScript) {
       blocklyFunctions.enviarComando("digital_write", comando, argsString),
     definir_pino_digital: async (comando, argsString) =>
       blocklyFunctions.enviarComando("definir_pino_digital", comando, argsString),
+    analog_read: async (comando, argsString) =>
+      blocklyFunctions.enviarComando("analog_read", comando, argsString),
     definir_pino_pwm: async (comando, argsString) =>
       blocklyFunctions.enviarComando("definir_pino_pwm", comando, argsString),
     pausa: async (comando, argsString) =>

@@ -55,8 +55,8 @@
     };
 
     Blockly.JavaScript.forBlock["sensor_seguidor_linha"] = function (block) {
-      const pino = block.getFieldValue("PINO");
-      return [`ler_analogico('${pino}')`, Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL];
+      var pino = block.getFieldValue("PINO");
+      return [`analog_read("ANALOG_READ","${pino}")`, Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL];
     };
   };
 
