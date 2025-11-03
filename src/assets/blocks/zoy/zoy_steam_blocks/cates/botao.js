@@ -13,31 +13,30 @@
         tooltip: "Botão Zoy sem debounce",
         helpUrl: "",
       },
-      {
-        type: "zoy_botao_debounce",
-        message0: "Ler botão ZOY (debounce) ",
-        args0: [],
-        colour: COR_BLOCOS,
-        output: "Boolean",
-        tooltip: "Botão Zoy com debounce",
-        helpUrl: "",
-      },
+      // {
+      //   type: "zoy_botao_debounce",
+      //   message0: "Ler botão ZOY (debounce) ",
+      //   args0: [],
+      //   colour: COR_BLOCOS,
+      //   output: "Boolean",
+      //   tooltip: "Botão Zoy com debounce",
+      //   helpUrl: "",
+      // },
     ]);
 
-    // Geração de código Python
-    Blockly.JavaScript.forBlock["zoy_botao"] = function () {
-      return [
-        `ler_pino_digital("4", "INPUT_PULLUP")`,
-        Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL,
-      ];
+    // Geração de código Javascript
+    Blockly.JavaScript.forBlock["zoy_botao"] = function (block) {
+      const code = `await digital_read("DIGITAL_READ", "4,INPUT_PULLUP")`;
+      return [code, Blockly.JavaScript.ORDER_AWAIT];
     };
 
-    Blockly.JavaScript.forBlock["zoy_botao_debounce"] = function (block) {
-      return [
-        `ler_botao_debounce("4", "INPUT_PULLUP")`,
-        Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL,
-      ];
-    };
+
+    // Blockly.JavaScript.forBlock["zoy_botao_debounce"] = function (block) {
+    //   return [
+    //     `ler_botao_debounce("4", "INPUT_PULLUP")`,
+    //     Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL,
+    //   ];
+    // };
   };
   const categoriaBotao = {
     kind: "category",

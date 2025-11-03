@@ -49,6 +49,14 @@ function enviarDadosSerial(dados) {
             delete pendingResolvers["ANALOG_READ"];
         }
     }
+
+    if (dados.startsWith("DIGITAL_VALOR:")) {
+        const valor = parseInt(dados.split(":")[1]);
+        if (pendingResolvers["DIGITAL_READ"]) {
+            pendingResolvers["DIGITAL_READ"](valor);
+            delete pendingResolvers["DIGITAL_READ"];
+        }
+    }
     
     // TRATAMENTO DE ACK/FIM DE AÇÃO DO ARDUINO
     if (dados === 'PAUSA_FIM' || dados === 'SERVO_FIM') {

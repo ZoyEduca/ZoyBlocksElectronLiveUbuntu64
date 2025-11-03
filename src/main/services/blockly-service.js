@@ -61,14 +61,27 @@ async function executarCodigo(codigoJavaScript) {
       blocklyFunctions.enviarComando("iniciar_zoy", comando, argsString),
     set_pin_mode: async (comando, argsString) =>
       blocklyFunctions.enviarComando("set_pin_mode", comando, argsString),
+
     digital_write: async (comando, argsString) =>
       blocklyFunctions.enviarComando("digital_write", comando, argsString),
+    digital_read: async (comando, argsString) => {
+      const comandoSerial = `<${comando}:${argsString}>`;
+      logs.push(`[INFO] [digital_read] Solicitando leitura: ${comandoSerial}`);
+      try {
+        const valor = await serialService.enviarComandoComRetorno("DIGITAL_READ", comandoSerial);
+        logs.push(`[INFO] [digital_read] Valor recebido: ${valor}`);
+        return valor;
+      } catch (err) {
+        logs.push(`[ERRO] [digital_read] ${err.message}`);
+        return 0;
+      }
+    },
     definir_pino_digital: async (comando, argsString) =>
       blocklyFunctions.enviarComando("definir_pino_digital", comando, argsString),
+
     analog_read: async (comando, argsString) => {
       const comandoSerial = `<${comando}:${argsString}>`;
       logs.push(`[INFO] [analog_read] Solicitando leitura: ${comandoSerial}`);
-
       try {
         const valor = await serialService.enviarComandoComRetorno("ANALOG_READ", comandoSerial);
         logs.push(`[INFO] [analog_read] Valor recebido: ${valor}`);
@@ -80,6 +93,7 @@ async function executarCodigo(codigoJavaScript) {
     },
     definir_pino_pwm: async (comando, argsString) =>
       blocklyFunctions.enviarComando("definir_pino_pwm", comando, argsString),
+
     pausa: async (comando, argsString) =>
       blocklyFunctions.enviarComando("pausa", comando, argsString), // Inclui aguarde_segundos
 

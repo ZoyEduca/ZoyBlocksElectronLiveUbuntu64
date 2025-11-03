@@ -479,8 +479,11 @@ void processarComando(String cmd)
     return; // Importante: Sai da função processarComando após lidar com o comando ULTRASSOM
   }
 
-  // === NOVO: DIGITAL_READ (ler pino digital) ===
-  if (comando_temp == "DIGITAL_READ") {
+  // ===  DIGITAL_READ (ler pino digital) ===
+  // Comando esperado do Python: <DIGITAL_READ:PINO,MODO>
+  // Ex: <DIGITAL_READ:2,INPUT> ou <DIGITAL_READ:13,INPUT_PULLUP>
+  if (comando_temp == "DIGITAL_READ")
+  {
     int sep_arg = argumentos_temp.indexOf(',');
     if (sep_arg == -1)
     {
@@ -509,6 +512,21 @@ void processarComando(String cmd)
       Serial.println("ERRO:MODO_INVALIDO");
       return;
     }
+
+    // Valida o pino (geralmente pinos digitais de 0 a 19 para Nano/Uno, incluindo os analógicos como digitais)
+    // Adapte este range conforme seu microcontrolador específico e pinos utilizados.
+    if (pino >= 0 && pino <= 19 && modo != -1)
+    {
+      pinMode(pino, modo); // Configura o modo do pino
+      int valor = digitalRead(pino);
+      Serial.print("DIGITAL_VALOR:");
+      Serial.println(valor); // Retorna 0 para LOW e 1 para HIGH
+    }
+    else
+    {
+      Serial.println("ERRO:PARAMETROS_DIGITAL_READ_INVALIDOS");
+    }
+    return; // Sai da função após processar o comando
   }
 
   // --- COMANDO BOTAO_DEBOUNCE (usa a função de debounce assíncrona) ---
