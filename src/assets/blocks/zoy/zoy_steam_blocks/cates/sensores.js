@@ -46,17 +46,20 @@
       },
     ]);
 
-    // Geração de código Python
+    // === Geração de código JavaScript ===
     Blockly.JavaScript.forBlock["zoy_ultrassom_distancia"] = function (block) {
-      var trig = block.getFieldValue("TRIG");
-      var echo = block.getFieldValue("ECHO");
-      var code = `ler_ultrassom("ULTRASSOM","${trig}, ${echo}")\n`;
-      return [code, Blockly.JavaScript.forBlock.ORDER_ATOMIC];
+      const trig = block.getFieldValue("TRIG");
+      const echo = block.getFieldValue("ECHO");
+      // Adiciona "await" pois ler_ultrassom é uma função assíncrona
+      const code = `await ler_ultrassom("ULTRASSOM", "${trig},${echo}")`;
+      return [code, Blockly.JavaScript.ORDER_AWAIT];
     };
 
     Blockly.JavaScript.forBlock["sensor_seguidor_linha"] = function (block) {
-      var pino = block.getFieldValue("PINO");
-      return [`analog_read("ANALOG_READ","${pino}")`, Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL];
+      const pino = block.getFieldValue("PINO");
+      // Adiciona "await" pois é uma função assíncrona
+      const code = `await analog_read("ANALOG_READ", "${pino}")`;
+      return [code, Blockly.JavaScript.ORDER_AWAIT];
     };
   };
 

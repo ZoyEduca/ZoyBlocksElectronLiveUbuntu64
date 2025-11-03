@@ -65,8 +65,19 @@ async function executarCodigo(codigoJavaScript) {
       blocklyFunctions.enviarComando("digital_write", comando, argsString),
     definir_pino_digital: async (comando, argsString) =>
       blocklyFunctions.enviarComando("definir_pino_digital", comando, argsString),
-    analog_read: async (comando, argsString) =>
-      blocklyFunctions.enviarComando("analog_read", comando, argsString),
+    analog_read: async (comando, argsString) => {
+      const comandoSerial = `<${comando}:${argsString}>`;
+      logs.push(`[INFO] [analog_read] Solicitando leitura: ${comandoSerial}`);
+
+      try {
+        const valor = await serialService.enviarComandoComRetorno("ANALOG_READ", comandoSerial);
+        logs.push(`[INFO] [analog_read] Valor recebido: ${valor}`);
+        return valor;
+      } catch (err) {
+        logs.push(`[ERRO] [analog_read] ${err.message}`);
+        return 0;
+      }
+    },
     definir_pino_pwm: async (comando, argsString) =>
       blocklyFunctions.enviarComando("definir_pino_pwm", comando, argsString),
     pausa: async (comando, argsString) =>
@@ -110,8 +121,19 @@ async function executarCodigo(codigoJavaScript) {
       blocklyFunctions.enviarComando("servo360", comando, argsString),
 
     // ----------- Funções Sensores -------------------
-    ler_ultrassom: async (comando, argsString) =>
-      blocklyFunctions.enviarComando("ler_ultrassom", comando, argsString),
+    ler_ultrassom: async (comando, argsString) => {
+      const comandoSerial = `<${comando}:${argsString}>`;
+      logs.push(`[INFO] [ler_ultrassom] Solicitando leitura: ${comandoSerial}`);
+
+      try {
+        const valor = await serialService.enviarComandoComRetorno("ULTRASSOM", comandoSerial);
+        logs.push(`[INFO] [ler_ultrassom] Valor recebido: ${valor}`);
+        return valor;
+      } catch (err) {
+        logs.push(`[ERRO] [ler_ultrassom] ${err.message}`);
+        return 0; // Retorna 0 em caso de erro para não quebrar o Blockly
+      }
+    },
 
     // ----------- Funções Som -------------------
     som_nota: async (comando, argsString) =>

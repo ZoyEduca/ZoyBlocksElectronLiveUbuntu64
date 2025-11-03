@@ -11,6 +11,10 @@ const commandQueue = [];
 let isWaitingForAck = false; // TRUE se estamos esperando PAUSA_FIM, SERVO_FIM, etc.
 // ========================================================
 
+// ==== PROMESSAS PENDENTES PARA RESPOSTAS DE SENSORES ====
+let pendingResolvers = {}; // Ex: { ULTRASSOM: resolveFn, ANALOG_READ: resolveFn }
+// ========================================================
+
 function enviarStatusSerial(data) {
     const allWindows = BrowserWindow.getAllWindows();
     allWindows.forEach(win => {
@@ -28,6 +32,23 @@ function enviarDadosSerial(dados) {
             win.webContents.send('onRespostaSerial', dados);
         }
     });
+
+    // ======== TRATAMENTO DE RESPOSTAS DE SENSOR ==========
+    if (dados.startsWith("DISTANCIA:")) {
+        const valor = parseFloat(dados.split(":")[1]);
+        if (pendingResolvers["ULTRASSOM"]) {
+            pendingResolvers["ULTRASSOM"](valor);
+            delete pendingResolvers["ULTRASSOM"];
+        }
+    }
+
+    if (dados.startsWith("ANALOG_VALOR:")) {
+        const valor = parseInt(dados.split(":")[1]);
+        if (pendingResolvers["ANALOG_READ"]) {
+            pendingResolvers["ANALOG_READ"](valor);
+            delete pendingResolvers["ANALOG_READ"];
+        }
+    }
     
     // TRATAMENTO DE ACK/FIM DE AÇÃO DO ARDUINO
     if (dados === 'PAUSA_FIM' || dados === 'SERVO_FIM') {
@@ -111,6 +132,34 @@ async function desconectarPorta() {
         return { status: false, mensagem: "Nenhum dispositivo conectado." };
     }
 }
+
+async function enviarComandoComRetorno(tag, comandoCompleto) {
+    if (!serialPort || !serialPort.isOpen) {
+        throw new Error("Dispositivo não conectado.");
+    }
+
+    return new Promise((resolve, reject) => {
+        // Registra o "resolve" da promessa para este tipo de comando
+        pendingResolvers[tag] = resolve;
+
+        // Envia o comando imediatamente (sem fila, leitura direta)
+        enviarComandoSerialImmediate(comandoCompleto, (err) => {
+            if (err) {
+                delete pendingResolvers[tag];
+                reject(err);
+            }
+        });
+
+        // Timeout de segurança caso não haja resposta
+        setTimeout(() => {
+            if (pendingResolvers[tag]) {
+                delete pendingResolvers[tag];
+                reject(new Error("Timeout aguardando resposta do sensor."));
+            }
+        }, 2000);
+    });
+}
+
 
 // FUNÇÃO CHAVE: Usa callbacks para garantir que a escrita funciona (CORREÇÃO DE "NÃO CHEGA NADA")
 function enviarComandoSerialImmediate(comando, callback) {
@@ -200,5 +249,6 @@ module.exports = {
     conectarPorta,
     desconectarPorta,
     // Substitui a função de envio pela função que gerencia a fila
-    enviarComandoSerial: adicionarComandoNaFila, 
+    enviarComandoSerial: adicionarComandoNaFila,
+    enviarComandoComRetorno, // Função para comandos com retorno
 };
