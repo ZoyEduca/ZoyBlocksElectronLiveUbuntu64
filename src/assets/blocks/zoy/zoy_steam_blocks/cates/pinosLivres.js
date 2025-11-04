@@ -94,14 +94,12 @@
       },
     ]);
 
-    // Geração de código Python
+    // Geração de código Javascript
     Blockly.JavaScript.forBlock["ler_pino_digital"] = function (block) {
       const pin = block.getFieldValue("PIN");
       const modo = block.getFieldValue("MODO");
-      return [
-        `ler_pino_digital("${pin}", "${modo}")`,
-        Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL,
-      ];
+      const code = `await digital_read("DIGITAL_READ","${pin},${modo}")`;
+      return [code, Blockly.JavaScript.ORDER_AWAIT];
     };
 
     Blockly.JavaScript.forBlock["definir_pino_digital"] = function (block) {
@@ -110,10 +108,18 @@
       return `definir_pino_digital("DIGITAL_WRITE","${pin}, ${level}")\n`;
     };
 
+
+        Blockly.JavaScript.forBlock["sensor_seguidor_linha"] = function (block) {
+      const pino = block.getFieldValue("PINO");
+      // Adiciona "await" pois é uma função assíncrona
+      const code = `await analog_read("ANALOG_READ", "${pino}")`;
+      return [code, Blockly.JavaScript.ORDER_AWAIT];
+    };
+
     Blockly.JavaScript.forBlock["ler_pino_analogico"] = function (block) {
       const pin = block.getFieldValue("PIN");
-      // Já existe uma função ler_analogico no app.py, usaremos ela.
-      return [`ler_analogico("${pin}")`, Blockly.JavaScript.forBlock.ORDER_FUNCTION_CALL];
+      const code = `await analog_read("ANALOG_READ", "${pin}")`;
+      return [code, Blockly.JavaScript.ORDER_AWAIT];
     };
   };
 
