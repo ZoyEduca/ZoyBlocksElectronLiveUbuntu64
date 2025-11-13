@@ -18,7 +18,7 @@
     <nav class="navbar navbar-expand-lg custom-navbar">
         <div class="container-fluid">
 
-            <a class="navbar-brand" href="/">
+            <a class="navbar-brand" href="">
                 <!-- Depois tem que troca o chamado do relativo para o caminho absoluto -->
                 <img src="../../../assets/imgs/logo_zoy.png" alt="Logo Zoy" class="logo-img" title="Zoy Blocks v0.7.0">
             </a>
@@ -29,7 +29,6 @@
                     <path
                         d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
                 </svg>
-                Executar Código
             </button>
 
             <button id="abrirZoyGPTBtn" class="btn btn-secondary me-3 my-auto d-none d-lg-block">Abrir ZoyGPT</button>
@@ -42,9 +41,11 @@
 
             <div class="collapse navbar-collapse justify-content-end" id="navbarMenu">
                 <ul class="navbar-nav align-items-center gap-lg-3 gap-2">
-
-                    <li class="nav-item d-lg-none">
-                        <button id="abrirZoyGPTBtnMobile" class="btn btn-secondary w-100 mt-3">Abrir ZoyGPT</button>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link custom-link" href="" id="btnIdioma">
+                            <span class="d-none d-lg-inline">🌎</span> Idioma
+                        </a>
                     </li>
 
                     <li class="nav-item">
@@ -88,19 +89,6 @@
 
         <!-- SideBar Lado direito -->
         <div id="sidebarRight" class="container-fluid">
-
-            <!-- Opções de Idioma -->
-            <div class="language-selector">
-                <button class="language-button">
-                    <span>Idioma</span>
-                    <!-- Depois tem que troca o chamado da imagem para o caminho absoluto -->
-                    <img src="../../../assets/imgs/flags/globo.svg" alt="globo terrestre" />
-                </button>
-                <ul class="language-options">
-                    <!-- Aguardando preparação da função -->
-                </ul>
-            </div>
-
 
             <!-- Conexões(USB, Wifi, Bluetooth)  -->
             <div id="typeConnect">

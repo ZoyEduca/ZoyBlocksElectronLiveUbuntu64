@@ -119,6 +119,12 @@ npm start
 
 `deactivate` para gerar instalador
 
+### Alterar o arquivo .env
+De:
+`NODE_ENV=development`
+para:
+`NODE_ENV=production`
+
 ### Agora roda o script de criação
 
  `npm run dist` para gerar instalador
