@@ -243,7 +243,7 @@ function sendNextCommandFromQueue() {
         } else {
             // Comando "Fire and Forget" (ex: led_left, digital_write)
             // Não precisa de ACK e não é sensor.
-            nextItem.resolve(); // Resolve imediatamente
+            nextItem.resolve({ status: true, mensagem: `Comando ${comando} enviado com sucesso.` }); // Resolve imediatamente
             commandQueue.shift(); // Remove da fila
             isWaitingForAck = false; // Libera para o próximo
             setTimeout(sendNextCommandFromQueue, 0); 
