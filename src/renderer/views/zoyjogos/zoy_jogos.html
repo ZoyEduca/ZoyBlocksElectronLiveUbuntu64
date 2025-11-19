@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zoy Jogos - Labirinto com Níveis</title>
-    <!-- Carregando Tailwind CSS para estética e responsividade -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // Configuração do Tailwind para usar a fonte Inter e cores personalizadas
@@ -24,15 +23,30 @@
             }
         }
     </script>
-    <!-- Ajustando o caminho do CSS: Sobe 1 nível (views/) e entra em home/ -->
     <link rel="stylesheet" href="../home/home.css"> 
     <style>
         /* Estilos específicos para a tela de jogos */
-        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: #f0f4f8; }
+        body, html { 
+            height: 100%; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f0f4f8; 
+          
+        }
         
         /* Layout principal: 100% da viewport */
-        #mainContainer { display: flex; flex-direction: column; height: 100%; }
-        #gameAndBlockly { display: flex; flex-grow: 1; overflow: hidden; }
+        #mainContainer { 
+            display: flex; 
+            flex-direction: column; 
+            height: 100%; 
+        }
+        #gameAndBlockly { 
+            display: flex; 
+            flex-grow: 1; 
+            overflow: hidden; 
+          
+        }
 
         /* Área do Jogo */
         #gameArea { 
@@ -58,40 +72,7 @@
             height: 100%; 
         }
 
-        /* Estilos para a área de status e código (Barra de Controle) */
-        #controls { 
-            padding: 10px 20px; 
-            background-color: #ffffff; 
-            border-bottom: 1px solid #e2e8f0; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-        }
-        #generatedCodeDisplay { 
-            background: #f8fafc; 
-            padding: 8px 12px; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 6px;
-            white-space: pre-wrap; 
-            word-break: break-word; 
-            max-height: 80px; 
-            overflow-y: auto; 
-            flex-grow: 1; 
-            font-size: 0.8rem;
-            color: #475569;
-            min-width: 250px; 
-        }
-
-        /* Estilos do Labirinto (Canvas) */
-        #gameCanvas {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 4, 0, 0.05);
-            background-color: #fff;
-            margin-top: 10px;
-        }
-
+         
         /* Responsividade para telas menores */
         @media (max-width: 1024px) {
             #gameAndBlockly {
@@ -106,20 +87,31 @@
                 border-left: none;
                 border-top: 1px solid #e2e8f0;
             }
+        
+        }
+        /* 🚀 CORREÇÃO UNIFICADA: Esconde todas as barras de rolagem do Blockly */
+        .blocklyWorkspace, .blocklyScrollbarHandle {
+            overflow: hidden !important; /* Já estava, mas reforça */
+        }
+        .blocklyVScrollbar, 
+        .blocklyHScrollbar, 
+        .blocklyScrollbarVertical,
+        .blocklyFlyoutScrollbar, /* Alvo Principal - Scrollbar da Caixa de Ferramentas */
+        .blocklyScrollbarHandle { /* Alvo Anterior - O retângulo que desliza */
+            /* Força a remoção de todos os componentes de scrollbar */
+            display: none !important;
         }
     </style>
 </head>
 <body>
     <div id="mainContainer">
         
-        <!-- BARRA DE CONTROLE E CÓDIGO -->
         <div id="controls">
             <button 
                  class="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out"
                  onclick="window.location.href='zoy_quiz.html'">
                  Ir para o Quiz
             </button>
-            <!-- BOTÃO DE VOLTAR PARA ROBÓTICA -->
             <button 
                 class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out" 
                 id="btnVoltar" 
@@ -150,27 +142,29 @@
                 Parar
             </button>
             
-            <!-- Seletor de Dificuldade -->
-            <label for="difficultySelector" class="text-sm font-medium text-gray-700">Dificuldade:</label>
+            <label for="difficultySelector" class="text-sm font-medium text-gray-700">Fase:</label>
             <select id="difficultySelector" onchange="window.setDifficulty(this.value)"
                     class="py-2 px-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-zoy-blue focus:border-zoy-blue sm:text-sm">
-                <option value="easy">Fácil (5x5)</option>
-                <option value="medium">Médio (5x5)</option>
-                <option value="hard">Difícil (7x7)</option>
+                <option value="easy">Fase 1: Movimento Básico (5x5)</option>
+                <option value="medium">Fase 2: Curvas Simples (5x5)</option>
+                <option value="hard">Fase 3: Labirinto Simples (7x7)</option>
+                <option value="loop_challenge">Fase 4: Desafio de Repetição (5x5)</option>
+                <option value="conditional_loop">Fase 5: Loop Condicional (7x7)</option>
+                <option value="phase_6_turn_and_loop">Fase 6: Curvas Fechadas (5x5)</option>
+                <option value="phase_7_conditional_path">Fase 7: Caminho Bifurcado (7x7)</option>
+                <option value="phase_8_long_winding">Fase 8: Espiral Longa (7x7)</option>
+                <option value="phase_9_double_loop">Fase 9: Desvio e Retorno (7x7)</option>
+                <option value="phase_10_final_challenge">Fase 10: Desafio Final (8x8)</option>
             </select>
 
-            <!-- Exibição do Status -->
             <div id="statusMessage" class="px-3 py-1 rounded-lg text-sm bg-gray-100 text-gray-700 font-medium transition duration-150 ease-in-out">
                 Pronto para começar.
             </div>
 
-            <!-- Exibição do Código Gerado (Debugging/Referência) -->
             <pre id="generatedCodeDisplay">Nenhum bloco conectado</pre>
         </div>
 
-        <!-- ÁREA DO JOGO E DO BLOCKLY -->
         <div id="gameAndBlockly">
-            <!-- Área do Jogo/Labirinto -->
             <div id="gameArea">
                 <h3 class="text-xl font-bold mb-4 text-zoy-dark">Labirinto do Robô Zoy</h3>
                 <canvas id="gameCanvas" width="500" height="500"></canvas>
@@ -181,14 +175,12 @@
                 </button>
             </div>
 
-            <!-- Área do Blockly -->
             <div id="blocklyArea">
                 <div id="blocklyGameWorkspace"></div>
             </div>
         </div>
     </div>
 
-    <!-- TOOLBOX: Deve ter este ID para ser referenciado no JS -->
     <xml id="toolboxMaze" style="display: none">
         <category name="Movimento" colour="#CC6666">
             <block type="maze_moveForward"></block>
@@ -196,34 +188,35 @@
         </category>
         <category name="Controle" colour="#5CB85C">
             <block type="controls_repeat_simple"></block>
+            <block type="controls_while_path"></block> 
             <block type="controls_if_path"></block>
             <block type="controls_if_else_path"></block>
         </category>
-        
     </xml>
 
-    <!-- CRUCIAL: Carrega o script de lógica do Blockly e do jogo -->
     <script src="zoy_jogos.js"></script>
 
     <script>
-        // Variáveis Globais de Estado do Jogo
+        // Variáveis Globais de Estado do Jogo (mantidas)
         let canvas, ctx;
-        window.isRunning = false; // Flag para controlar a execução (usada por zoy_jogos.js)
+        window.isRunning = false; 
         
         // 0=Parede, 1=Caminho, 2=Início (Robô Zoy), 3=Fim (Objetivo)
         
-        // --- 1. DEFINIÇÃO DOS NÍVEIS DE DIFICULDADE ---
+        // --- 1. DEFINIÇÃO DOS NÍVEIS DE DIFICULDADE (10 FASES) ---
         const MAZES = {
+            // Fase 1: Movimento Básico
             easy: {
                 size: 5,
                 layout: [
                     [0, 0, 0, 0, 0], 
                     [0, 0, 0, 0, 0],
-                    [2, 1, 1, 1, 3], // Início (2) -> Caminho (1) -> Fim (3)
+                    [2, 1, 1, 1, 3], 
                     [0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0] 
                 ]
             },
+            // Fase 2: Curvas Simples
             medium: {
                 size: 5,
                 layout: [
@@ -234,6 +227,7 @@
                     [1, 1, 1, 0, 3]  
                 ]
             },
+            // Fase 3: Labirinto Simples
             hard: {
                 size: 7,
                 layout: [
@@ -244,6 +238,96 @@
                     [1, 1, 1, 1, 0, 1, 0],
                     [0, 1, 0, 1, 0, 1, 1],
                     [1, 1, 0, 1, 1, 1, 3]
+                ]
+            },
+            // Fase 4: Desafio de Repetição
+            loop_challenge: {
+                size: 5,
+                layout: [
+                    [2, 1, 0, 0, 0], 
+                    [1, 1, 0, 0, 0],
+                    [1, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 0],
+                    [1, 1, 1, 1, 3]  
+                ]
+            },
+            // Fase 5: Loop Condicional
+            conditional_loop: {
+                size: 7,
+                layout: [
+                    [2, 1, 1, 1, 1, 1, 0], 
+                    [0, 0, 0, 0, 0, 1, 0],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [0, 1, 0, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 0, 1, 0],
+                    [0, 1, 1, 1, 1, 1, 3] 
+                ]
+            },
+            // --- NOVAS FASES (6 a 10) ---
+            
+            // Fase 6: Curvas Fechadas (Requer repetição e virar)
+            phase_6_turn_and_loop: {
+                size: 5,
+                layout: [
+                    [2, 1, 1, 1, 1],
+                    [0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 3]
+                ]
+            },
+            // Fase 7: Caminho Bifurcado (Requer IF com virar)
+            phase_7_conditional_path: {
+                size: 7,
+                layout: [
+                    [2, 1, 1, 1, 0, 0, 0],
+                    [0, 0, 0, 1, 1, 1, 0],
+                    [0, 0, 0, 1, 0, 1, 0],
+                    [0, 0, 0, 1, 0, 1, 0],
+                    [0, 0, 0, 1, 0, 1, 0],
+                    [0, 0, 0, 1, 1, 1, 3],
+                    [0, 0, 0, 0, 0, 0, 0]
+                ]
+            },
+            // Fase 8: Espiral Longa (Requer repetição e virar)
+            phase_8_long_winding: {
+                size: 7,
+                layout: [
+                    [2, 1, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 0, 1, 0],
+                    [1, 1, 1, 1, 0, 1, 0],
+                    [1, 0, 0, 1, 0, 1, 0],
+                    [1, 0, 0, 1, 0, 1, 1],
+                    [1, 0, 0, 1, 0, 0, 1],
+                    [1, 1, 1, 1, 1, 1, 3]
+                ]
+            },
+            // Fase 9: Desvio e Retorno (Requer loop condicional)
+            phase_9_double_loop: {
+                size: 7,
+                layout: [
+                    [2, 1, 1, 0, 1, 1, 1],
+                    [0, 0, 1, 0, 1, 0, 1],
+                    [0, 0, 1, 0, 1, 0, 1],
+                    [0, 0, 1, 1, 1, 0, 1],
+                    [0, 0, 0, 0, 0, 0, 1],
+                    [1, 1, 1, 1, 1, 1, 1],
+                    [1, 0, 0, 0, 0, 0, 3]
+                ]
+            },
+            // Fase 10: Desafio Final (8x8) (Combinação de todos os blocos)
+            phase_10_final_challenge: {
+                size: 8,
+                layout: [
+                    [2, 1, 1, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 1, 0],
+                    [0, 1, 1, 1, 1, 0, 1, 0],
+                    [0, 1, 0, 0, 1, 0, 1, 0],
+                    [0, 1, 0, 0, 1, 1, 1, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 1, 1, 3],
+                    [0, 0, 0, 0, 0, 0, 0, 0]
                 ]
             }
         };
@@ -262,7 +346,7 @@
         const ROBOT_COLOR = '#1e40af'; 
         const FACE_COLOR = '#ffffff';
 
-        // --- FUNÇÕES AUXILIARES DE ESTADO ---
+        // --- FUNÇÕES AUXILIARES DE ESTADO (mantidas) ---
 
         /** Função para mudar a dificuldade e recarregar o labirinto. */
         window.setDifficulty = function(newDifficulty) {
@@ -277,7 +361,13 @@
             MAZE = mazeConfig.layout;
             MAZE_SIZE = mazeConfig.size;
             window.resetGame(); // Reinicia o jogo com o novo labirinto
-            window.updateStatus(`Nível alterado para ${newDifficulty.toUpperCase()}.`);
+            
+            // Redimensiona o workspace do Blockly após a mudança de fase
+            if (window.workspaceMaze) {
+                Blockly.svgResize(window.workspaceMaze);
+            }
+            
+            window.updateStatus(`Fase alterada para ${newDifficulty.toUpperCase()}.`);
         }
 
 
@@ -298,14 +388,17 @@
         window.resetGame = function() { 
             window.isRunning = false;
             // Encontra a posição inicial (tile 2)
+            let foundStart = false;
             for (let y = 0; y < MAZE_SIZE; y++) {
                 for (let x = 0; x < MAZE_SIZE; x++) {
                     if (MAZE[y][x] === 2) {
                         currentPosition = { x, y };
                         currentDirection = 0; // Direção inicial: Direita
+                        foundStart = true;
                         break;
                     }
                 }
+                if (foundStart) break;
             }
             window.updateStatus('Labirinto Reiniciado. Pronto para programar!');
             drawMaze();
@@ -320,7 +413,6 @@
         window.moveForward = async function() {
             if (!window.isRunning) return false;
             
-            // Adiciona um atraso para a animação
             await window.delay(300); 
 
             let newX = currentPosition.x;
@@ -368,7 +460,6 @@
         window.turn = async function(direction) {
             if (!window.isRunning) return false;
             
-            // Adiciona um atraso para a animação
             await window.delay(300);
 
             if (direction === 'LEFT') {
@@ -411,8 +502,8 @@
             return MAZE[checkY][checkX] !== 0; 
         };
         
-        // --- LÓGICA DE DESENHO (Canvas) ---
-
+        // --- LÓGICA DE DESENHO (Canvas) e LÓGICA DE CONTROLE DE CÓDIGO (Interface com Blockly) ---
+        
         /**
          * Desenha o Robô Zoy estilizado no canvas.
          */
@@ -494,18 +585,14 @@
             drawZoyRobot(currentPosition.x, currentPosition.y, tileSize, currentDirection);
         }
 
-        // --- LÓGICA DE CONTROLE DE CÓDIGO (Interface com Blockly) ---
+        // --- LÓGICA DE CONTROLE DE CÓDIGO (Interface com Blockly) (mantida) ---
         
         /** * Gera o código a partir do workspace do Blockly e atualiza o painel de exibição. */
         window.updateCodeDisplay = function() {
-            // A variável window.workspaceMaze é definida em zoy_jogos.js
             if (!window.Blockly || !window.workspaceMaze) return;
 
-            // Gera o código em JavaScript (usando o Python Generator para simular a execução)
-            //const code = Blockly.Python.workspaceToCode(window.workspaceMaze);
             const code = window.jsGenerator.workspaceToCode(window.workspaceMaze);
             
-            // Envolve o código em uma função JS assíncrona para execução segura
             const finalCode = `(async function() {\n${code}})();`;
             
             const displayElement = document.getElementById('generatedCodeDisplay');
@@ -513,40 +600,40 @@
             if (displayElement) {
                 displayElement.textContent = finalCode;
             }
-            // Retorna o código final para uso na execução
             return finalCode;
         };
         
         /** * Inicia a execução do programa Blockly. */
         window.executeProgram = async function() {
-            if (window.isRunning) return; // Evita múltiplas execuções
+            if (window.isRunning) return; 
             
-            const code = window.updateCodeDisplay(); // Pega o código mais recente
+            if (typeof window.executeProgramInJS === 'function') {
+                return window.executeProgramInJS();
+            }
+            
+            const code = window.updateCodeDisplay(); 
             
             if (!code || code.includes("Nenhum bloco conectado")) {
                 window.updateStatus("Conecte os blocos para criar um programa.", 'bg-yellow-200', 'text-yellow-800');
                 return;
             }
             
-            window.resetGame(); // Reinicia o labirinto antes de começar
+            window.resetGame(); 
             window.isRunning = true;
             window.updateStatus('Executando programa...', 'bg-blue-200', 'text-blue-800');
             
             document.getElementById('btnExecutarPrograma').disabled = true;
             document.getElementById('btnPararPrograma').disabled = false;
 
-            // Execução real do código JS gerado (com as APIs globais)
             try {
-                // A função `eval` executa o código JS assíncrono que chama moveForward, turn, etc.
                 await eval(code); 
             } catch (e) {
-                // Erros esperados que param o loop (colisão, vitória)
                 if (e.message !== 'Collision or Game Over' && e.message !== 'Game Over') {
                     window.updateStatus(`ERRO DE EXECUÇÃO: ${e.message}`, 'bg-red-200', 'text-red-900');
                     console.error("Erro na execução do programa Blockly:", e);
                 }
             } finally {
-                if (window.isRunning) { // Se não foi parado por vitória, colisão ou erro
+                if (window.isRunning) { 
                     window.updateStatus('Programa Terminado. Reinicie para tentar novamente.', 'bg-gray-200', 'text-gray-700');
                 }
                 window.isRunning = false;
@@ -564,7 +651,7 @@
         };
 
 
-        // --- INICIALIZAÇÃO E REDIMENSIONAMENTO ---
+        // --- INICIALIZAÇÃO E REDIMENSIONAMENTO (mantidas) ---
 
         function resizeCanvas() {
             const container = document.getElementById('gameArea');
