@@ -112,8 +112,18 @@
 <body>
 
   <!-- Botão Voltar -->
-  <div id="backButton" onclick="goBackToMenu()">⬅ Voltar</div>
 
+     <button 
+      class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out" 
+      id="backButton" 
+      onclick="window.electronAPI.goBack()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short inline-block mr-1" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
+      </svg>
+      Voltar
+  </button>
+ 
+  
   <!-- Seletor de disciplina -->
   <div id="disciplinaSelector">
     <h2>Escolha uma disciplina</h2>
@@ -146,13 +156,13 @@
     /* ---------------------------
        Protótipo Phaser 3 — Zoy Game
     ----------------------------*/
-    function goBackToMenu(){
-      if(window.electronAPI?.navigateTo){
-        window.electronAPI.navigateTo('menu');
-      } else {
-        window.location.href = 'zoy_jogos.html';
-      }
-    }
+    // function goBackToMenu(){
+    //   if(window.electronAPI?.navigateTo){
+    //     window.electronAPI.navigateTo('menu');
+    //   } else {
+    //     window.location.href = 'home.html';
+    //   }
+    // }
 
     // Base de perguntas
     const QUESTIONS = [

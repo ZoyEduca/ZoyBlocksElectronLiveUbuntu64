@@ -13,7 +13,6 @@
 }
 
 
-
 /* ----------------- NavBar ------------------------ */
 .custom-navbar {
   background: linear-gradient(90deg, #2b1cd1 0%, #3d2fd9 100%);
@@ -95,8 +94,6 @@
 
 
 
-
-
 /* ----------------- sideBarRigth ----------------------------  */
 #sidebarRight {
   flex-basis: 30%; /* O sidebarLiveMode ocupa 30% da largura */
@@ -128,6 +125,7 @@
   margin: 0;
 }
 
+
 /* -----------  Botão de alternância para a sidebar -----------------*/
 #toggleSidebar {
   position: absolute; /* Posicionado relativamente ao #blocklyDiv */
@@ -158,58 +156,11 @@
   fill: white;
 }
 
-/* ----------------- Seletor de Idioma ----------------------------  */
-.language-selector {
-  position: relative;
-  display: flex; /* Flexbox aplicado para alinhar itens dentro do container */
-  justify-content: flex-end; /* Alinha os itens à direita */
-}
-
-.language-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.language-options {
-  display: none;
-  position: absolute;
-  top: 100%;
-  background-color: white;
-  border: 1px solid #ccc;
-  width: 60%;
-  padding: 0;
-  margin: 0;
-  z-index: 20;
-}
-
-.language-options li {
-  padding: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.language-options li:hover {
-  background-color: #f1f1f1;
-}
-
-.language-options li img {
-  width: auto;
-  height: auto;
-  margin-right: 5px;
-}
-
-.language-selector.open .language-options {
-  display: block;
-}
-
-/* Conexões USB */
 .custom_select {
   background-color: #e6e6e6;
   color: black;
 }
+
 
 /* ----------------- Carrosel de Imagens ------------------------ */
 #carouselZoy {
