@@ -697,6 +697,16 @@ async function ajudaLinkOpen(e) {
   }
 }
 
+// Exemplo no JavaScript da Tela Principal
+document.getElementById('btnBlocklyGames').addEventListener('click', () => {
+    // Abre o arquivo HTML do jogo em uma nova janela ou aba
+    window.open(
+        '../blockly_Games/index.html', // Caminho para o arquivo HTML do jogo
+        '_blank',                         // Abre em uma nova aba/janela
+        'width=1000,height=700,menubar=no,toolbar=no,location=no,status=no' // Opções
+    );
+});
+
 // ----------------------------------------------------------
 // --- EVENTOS PRINCIPAIS(DOMloading)------------------------
 // ----------------------------------------------------------
