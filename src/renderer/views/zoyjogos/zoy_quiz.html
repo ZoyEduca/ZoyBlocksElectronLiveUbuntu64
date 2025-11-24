@@ -3,13 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ZoyBlocks — Protótipo Game (Phaser 3)</title>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-  <style>
-    html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
-    #game-container{width:100%;height:100vh;display:block}
+  <title>Zoy Pong — Controle Serial</title>
 
-    /* Botão voltar */
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; object-src 'self'">
+
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+
+  <style>
+    html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background-color:#0f0f0f;}
+    #game-container{width:100%;height:100vh;display:block}
+    
+    /* Display para o Score e a Distância */
+    #scoreDisplay{
+      position:fixed;left:50%;top:12px;transform:translateX(-50%);
+      color:#fff;font-size:24px;z-index:900;
+      text-shadow: 0 0 5px #000;
+      background: rgba(0,0,0,0.25);
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+
+    /* Botão Voltar */
     #backButton {
       position: fixed;
       bottom: 12px;
@@ -26,284 +40,237 @@
       z-index: 1000;
       transition: all 0.2s ease;
     }
-
-    #backButton:hover {
-      background: #f1f1f1;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.3);
-    }
-
-    /* Modal/Oráculo */
-    #oracleOverlay{
-      position:fixed;left:0;top:0;width:100%;height:100%;
-      display:flex;align-items:center;justify-content:center;
-      background:rgba(0,0,0,0.5);z-index:999;visibility:hidden;
-    }
-    #oracleCard{
-      background:#fff;padding:20px;border-radius:8px;
-      max-width:520px;width:92%;box-shadow:0 6px 18px rgba(0,0,0,0.25)
-    }
-    #oracleCard h2{margin:0 0 8px 0}
-    #oracleOptions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-    .optBtn{
-      padding:10px;border-radius:6px;border:1px solid #ccc;
-      background:#f7f7f7;cursor:pointer;text-align:left
-    }
-    .optBtn:hover{background:#eee}
-    #oracleFooter{margin-top:12px;font-size:13px;color:#444}
-
-    /* Top info */
-    #infoBar{
-      position:fixed;left:12px;top:12px;z-index:900;
-      background:rgba(255,255,255,0.9);padding:8px 12px;
-      border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,0.12)
-    }
-    #infoBar b{margin-right:6px}
-
-  /* Disciplina selector centralizado com tema Electron */
-#disciplinaSelector {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 900;
-  width: 320px;
-  background: linear-gradient(145deg, #2c2f33, #23272a); /* fundo escuro gradiente estilo Electron */
-  color: #ffffff;
-  padding: 24px 32px;
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
-  text-align: center;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Título */
-#disciplinaSelector h2 {
-  margin-bottom: 20px;
-  font-size: 22px;
-  font-weight: 600;
-  color: #f5f5f5;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-/* Botões */
-#disciplinaSelector button {
-  display: block;
-  width: 100%;
-  margin: 8px 0;
-  padding: 10px 0;
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 8px;
-  border: none;
-  background: #7289da; /* azul suave estilo Electron */
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-#disciplinaSelector button:hover {
-  background: #677bc4;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-
   </style>
 </head>
 <body>
 
-  <!-- Botão Voltar -->
-
-     <button 
-      class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out" 
-      id="backButton" 
-      onclick="window.electronAPI.goBack()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short inline-block mr-1" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z"/>
-      </svg>
-      Voltar
-  </button>
- 
-  
-  <!-- Seletor de disciplina -->
-  <div id="disciplinaSelector">
-    <h2>Escolha uma disciplina</h2>
-    <button onclick="window.zoyHelpers.loadDisciplina('matematica')">Matemática</button>
-    <button onclick="window.zoyHelpers.loadDisciplina('portugues')">Português</button>
-    <button onclick="window.zoyHelpers.loadDisciplina('robotica')">Robótica</button>
+  <div id="scoreDisplay">
+    Jogador 1 (Sensor): 0 | Jogador 2 (CPU): 0 | Distância: <span id="distanceValue">20.0</span> cm
   </div>
 
-  <!-- Container do Phaser -->
+  <button id="backButton" onclick="goBackToMenu()">Voltar</button>
+
   <div id="game-container"></div>
 
-  <!-- Barra de informações -->
-  <div id="infoBar">
-    <b>Modo:</b> Iniciação — <span id="scoreDisplay">Score: 0</span>
-  </div>
-
-  <!-- Modal Oráculo -->
-  <div id="oracleOverlay" role="dialog" aria-hidden="true">
-    <div id="oracleCard">
-      <h2 id="oracleTitle">Oráculo da Robótica</h2>
-      <div id="oracleQuestion">Pergunta...</div>
-      <div id="oracleOptions"></div>
-      <div id="oracleFooter"></div>
-    </div>
-  </div>
-
-  <script src="zoy_quiz.js"></script>
-
+  <!-- Código do jogo integrado -->
   <script>
-    /* ---------------------------
-       Protótipo Phaser 3 — Zoy Game
-    ----------------------------*/
-    // function goBackToMenu(){
-    //   if(window.electronAPI?.navigateTo){
-    //     window.electronAPI.navigateTo('menu');
-    //   } else {
-    //     window.location.href = 'home.html';
-    //   }
-    // }
+  /* -----------------------------------------------------------------
+     Zoy Pong 2D — Controle Serial (Estabilidade Máxima de Renderização)
+     ----------------------------------------------------------------- */
 
-    // Base de perguntas
-    const QUESTIONS = [
-      {id:1, question:'O que faz um resistor em um circuito elétrico?', options:['Armazena carga elétrica','Limita a corrente elétrica'], answer:1, explanation:'Resistores limitam a corrente e dissipam energia em forma de calor.'},
-      {id:2, question:'Qual componente é usado para controlar a velocidade de um motor DC em PWM?', options:['Transistor / MOSFET','Condensador eletrolítico'], answer:0, explanation:'Transistores/MOSFETs são usados como chaves para modular a potência do motor (PWM).'},
-      {id:3, question:'Qual dispositivo serve para medir distância sem contato usando ultrassom?', options:['Sensor IR','Sensor ultrassônico HC-SR04'], answer:1, explanation:'O HC-SR04 mede distância por emissão e recepção de ondas ultrassônicas.'}
-    ];
+  // --- Variáveis Globais ---
+  let lastDistance = 20.0;
+  let player;
+  let ball;
+  let opponentPaddle;
+  let distanceDisplayElement;
+  let player1Score = 0;
+  let player2Score = 0;
 
-    // Parâmetros do jogo
-    const MODE = {name:'Iniciação', doors:2, pointsPerDoor:5};
-    let gameSceneRef = null;
-    let currentQuestion = null;
-    let currentDoorObj = null;
-    let score = Number(localStorage.getItem('zoy_score') || 0);
-    document.getElementById('scoreDisplay').innerText = 'Score: ' + score;
+  // Dimensões e Constantes
+  const GAME_WIDTH = 960;
+  const GAME_HEIGHT = 640;
+  const PADDLE_HEIGHT = 100;
+  const PADDLE_WIDTH = 20;
+  const BALL_SIZE = 20;
 
-    // Previne fechamento ao clicar fora do modal
-    document.getElementById('oracleOverlay').addEventListener('click', e=>{
-      if(e.target === document.getElementById('oracleOverlay')) e.stopPropagation();
-    });
 
-    function openOracleForDoor(scene, doorObj){
-      currentQuestion = QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
-      currentDoorObj = doorObj;
-      gameSceneRef = scene;
-      showOracleModal(currentQuestion);
-      scene.physics.world.pause();
-    }
+  // ------------------------ Controle IPC (Electron) ------------------------
+  // Nota: para utilizar via Electron, exponha `electronAPI.onDadosSerial` no preload script
+  if (window.electronAPI && window.electronAPI.onDadosSerial) {
+      window.electronAPI.onDadosSerial((serialData) => {
+          const dataString = serialData.toString().trim();
+          const distanceMatch = dataString.match(/(\d+\.?\d*)/);
 
-    function showOracleModal(q){
-      const overlay = document.getElementById('oracleOverlay');
-      const qEl = document.getElementById('oracleQuestion');
-      const opts = document.getElementById('oracleOptions');
-      const footer = document.getElementById('oracleFooter');
-      qEl.innerText = q.question;
-      opts.innerHTML = '';
-      q.options.forEach((optText, idx)=>{
-        const btn = document.createElement('button');
-        btn.className = 'optBtn';
-        btn.innerText = optText;
-        btn.onclick = ()=>handleAnswer(idx);
-        opts.appendChild(btn);
-      });
-      footer.innerText = 'Escolha uma opção para o Oráculo avaliar.';
-      overlay.style.visibility='visible';
-      overlay.setAttribute('aria-hidden','false');
-    }
-
-    function closeOracleModal(){
-      const overlay = document.getElementById('oracleOverlay');
-      overlay.style.visibility='hidden';
-      overlay.setAttribute('aria-hidden','true');
-    }
-
-    function handleAnswer(selectedIndex){
-      const footer = document.getElementById('oracleFooter');
-      if(selectedIndex===currentQuestion.answer){
-        footer.innerText='✅ Correto! '+currentQuestion.explanation;
-        if(currentDoorObj && !currentDoorObj.opened){
-          currentDoorObj.opened=true;
-          score+=MODE.pointsPerDoor;
-          localStorage.setItem('zoy_score',score);
-          document.getElementById('scoreDisplay').innerText='Score: '+score;
-          if(gameSceneRef){
-            gameSceneRef.time.delayedCall(800, ()=>{
-              try{ gameSceneRef.physics.world.remove(currentDoorObj.body); }catch(e){}
-            });
-            if(currentDoorObj.setFillStyle) currentDoorObj.setFillStyle(0x2ecc71);
+          if (distanceMatch) {
+              const distance = parseFloat(distanceMatch[1]);
+              // limite de distâncias esperadas do sensor
+              lastDistance = Phaser.Math.Clamp(distance, 5, 40);
           }
-        }
-      } else {
-        footer.innerText='❌ Errado. Dica: '+currentQuestion.explanation;
-      }
-      setTimeout(()=>{
-        closeOracleModal();
-        if(gameSceneRef) gameSceneRef.physics.world.resume();
-      },1200);
-    }
-
-    /* ------------------ Phaser config and scene ------------------ */
-    const config = {
-      type: Phaser.AUTO,
-      parent: 'game-container',
-      width: 960,
-      height: 640,
-      backgroundColor: '#87ceeb',
-      physics: { default:'arcade', arcade:{debug:false} },
-      scene: { preload, create, update }
-    };
-    const game = new Phaser.Game(config);
-
-    function preload(){}
-    let player;
-    function create(){
-      const scene=this;
-      window._zoy_scene = scene;
-      player=this.add.rectangle(120,320,40,40,0x222222);
-      this.physics.add.existing(player);
-      player.body.setCollideWorldBounds(true);
-      player.body.setSize(40,40);
-
-      // portas
-      this.doors=[];
-      const startY=200, gap=160;
-      for(let i=0;i<MODE.doors;i++){
-        const y=startY+i*gap;
-        const door=this.add.rectangle(760,y,64,120,0x8B4513);
-        this.physics.add.existing(door,true);
-        door.isDoor=true;
-        door.opened=false;
-        door.doorId=i+1;
-        this.doors.push(door);
-      }
-
-      this.doors.forEach(d=>{
-        this.physics.add.overlap(player,d,(p,dObj)=>{
-          if(!dObj.opened) openOracleForDoor(scene,dObj);
-        });
       });
+  }
 
-      this.physics.world.setBounds(0,0,960,640);
-      this.cursors=this.input.keyboard.createCursorKeys();
-      this.add.text(12,610,'Use as setas do teclado para mover o Zoy. Vá até uma porta para o Oráculo.',{fontSize:'14px',color:'#000'});
-    }
+  // ------------------------ Mapeamento do Sensor ------------------------
+  // Mapeia distância [5..40] cm para posição de raquete no eixo Y [540..100]
+  function mapDistanceToPaddleY(distance) {
+      // normaliza de 0..1
+      const t = Phaser.Math.Clamp((distance - 5) / (40 - 5), 0, 1);
+      // linear entre 540 (mais perto) e 100 (mais longe)
+      return Phaser.Math.Linear(540, 100, t);
+  }
 
-    function update(time,delta){
-      const speed=220;
-      if(!this.cursors || !player) return;
-      player.body.setVelocity(0);
-      if(this.cursors.left.isDown) player.body.setVelocityX(-speed);
-      if(this.cursors.right.isDown) player.body.setVelocityX(speed);
-      if(this.cursors.up.isDown) player.body.setVelocityY(-speed);
-      if(this.cursors.down.isDown) player.body.setVelocityY(speed);
-    }
+  // ------------------------ FUNÇÕES DE JOGO (Phaser) ------------------------
 
-    // Helpers para debug/console
-    window.zoyHelpers = {
-      resetScore: ()=>{score=0; localStorage.setItem('zoy_score',0); document.getElementById('scoreDisplay').innerText='Score: 0'; location.reload();},
-      setModeToEnem: ()=>{MODE.name='ENEM'; MODE.doors=10; MODE.pointsPerDoor=1; alert('Modo alterado para ENEM — recarregue a página para ver 10 portas.');},
-      loadDisciplina: (disc)=>{alert('Carregar disciplina: '+disc);}
-    };
+  function startGame(scene) {
+      // coloca no centro e zera velocidade
+      ball.setPosition(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+      ball.body.setVelocity(0, 0);
+
+      const directionX = Math.random() < 0.5 ? 1 : -1;
+      const initialSpeed = 300;
+
+      ball.body.setVelocityX(initialSpeed * directionX);
+      ball.body.setVelocityY(Phaser.Math.FloatBetween(-150, 150));
+  }
+
+  function hitPaddle(ballObj, paddleObj) {
+      // ligeiro aumento de velocidade horizontal (controlado)
+      const currentVelX = ballObj.body.velocity.x;
+      const sign = currentVelX >= 0 ? 1 : -1;
+      let newVelocityX = currentVelX * 1.03; // reduzido para evitar atravessar
+      // garante um mínimo de velocidade
+      if (Math.abs(newVelocityX) < 200) {
+          newVelocityX = 200 * sign;
+      }
+      ballObj.body.setVelocityX(newVelocityX);
+
+      // efeito vertical baseado no ponto de contato
+      const diff = ballObj.y - paddleObj.y;
+      ballObj.body.setVelocityY(ballObj.body.velocity.y + diff * 5);
+  }
+
+  function updateScoreDisplay(element) {
+      if (element) {
+          element.innerHTML = `Jogador 1 (Sensor): <b>${player1Score}</b> | Jogador 2 (CPU): ${player2Score} | Distância: <span id="distanceValue">${lastDistance.toFixed(1)}</span> cm`;
+      }
+  }
+
+  function goBackToMenu() {
+      if (window.electronAPI && window.electronAPI.goBack) {
+          window.electronAPI.goBack();
+      } else {
+          window.location.href = 'zoy_jogos.html';
+      }
+  }
+
+
+  // ------------------------ ESTRUTURA DA CENA ------------------------
+
+  function preload() {}
+
+  function create() {
+      const scene = this;
+      window._zoy_scene = scene;
+
+      scene.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
+      scene.cameras.main.setBackgroundColor('#000000');
+
+      const playerX = PADDLE_WIDTH / 2 + 10;
+      const cpuX = GAME_WIDTH - PADDLE_WIDTH / 2 - 10;
+
+      // 1. RAQUETE JOGADOR (Sensor)
+      player = scene.add.rectangle(playerX, GAME_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0x2ecc71);
+      player.setOrigin(0.5);
+
+      scene.physics.add.existing(player);
+      player.body.setImmovable(true);
+      player.body.setCollideWorldBounds(true);
+      player.body.setSize(PADDLE_WIDTH, PADDLE_HEIGHT);
+      // body offset = centraliza o corpo no game object
+      player.body.setOffset(-PADDLE_WIDTH / 2, -PADDLE_HEIGHT / 2);
+
+      // 2. CPU
+      opponentPaddle = scene.add.rectangle(cpuX, GAME_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0xe74c3c);
+      opponentPaddle.setOrigin(0.5);
+
+      scene.physics.add.existing(opponentPaddle);
+      opponentPaddle.body.setImmovable(true);
+      opponentPaddle.body.setCollideWorldBounds(true);
+      opponentPaddle.body.setSize(PADDLE_WIDTH, PADDLE_HEIGHT);
+      opponentPaddle.body.setOffset(-PADDLE_WIDTH / 2, -PADDLE_HEIGHT / 2);
+
+      // 3. BOLA
+      ball = scene.add.circle(GAME_WIDTH / 2, GAME_HEIGHT / 2, BALL_SIZE / 2, 0xffa500);
+      ball.setOrigin(0.5);
+
+      scene.physics.add.existing(ball);
+      // usa corpo circular para colisões mais naturais
+      ball.body.setCircle(BALL_SIZE / 2);
+      ball.body.setOffset(-BALL_SIZE / 2, -BALL_SIZE / 2);
+      ball.body.setCollideWorldBounds(true);
+      ball.body.setBounce(1, 1);
+
+      // Linha central
+      const lineGraphics = scene.add.graphics({ lineStyle: { width: 2, color: 0x888888, alpha: 0.5 } });
+      lineGraphics.beginPath();
+      lineGraphics.moveTo(GAME_WIDTH / 2, 0);
+      lineGraphics.lineTo(GAME_WIDTH / 2, GAME_HEIGHT);
+      lineGraphics.strokePath();
+
+      // Colisões
+      scene.physics.add.collider(ball, player, hitPaddle, null, scene);
+      scene.physics.add.collider(ball, opponentPaddle, hitPaddle, null, scene);
+
+      distanceDisplayElement = document.getElementById('distanceValue');
+      scene.scoreDisplayElement = document.getElementById('scoreDisplay');
+
+      startGame(scene);
+  }
+
+  function update() {
+
+      // --------------------------- RAQUETE JOGADOR ---------------------------
+      if (distanceDisplayElement) {
+          distanceDisplayElement.innerText = lastDistance.toFixed(1);
+      }
+
+      const targetY = mapDistanceToPaddleY(lastDistance);
+
+      // LERP correto: from = player.y, to = targetY, t = 0..1
+      player.y = Phaser.Math.Linear(player.y, targetY, 0.2);
+      player.body.updateFromGameObject();
+
+      // --------------------------- RAQUETE CPU ---------------------------
+      const cpuTrackingSpeed = 5;
+      let targetCpuY = ball.body.velocity.x > 0 ? ball.y : GAME_HEIGHT / 2;
+
+      if (Math.abs(targetCpuY - opponentPaddle.y) > cpuTrackingSpeed) {
+          opponentPaddle.y += (targetCpuY > opponentPaddle.y ? cpuTrackingSpeed : -cpuTrackingSpeed);
+      }
+
+      opponentPaddle.y = Phaser.Math.Clamp(opponentPaddle.y, PADDLE_HEIGHT / 2, GAME_HEIGHT - PADDLE_HEIGHT / 2);
+      opponentPaddle.body.updateFromGameObject();
+
+      // --------------------------- PONTUAÇÃO ---------------------------
+      if (ball.x < 0) {
+          player2Score++;
+          updateScoreDisplay(this.scoreDisplayElement);
+          startGame(this);
+      } else if (ball.x > GAME_WIDTH) {
+          player1Score++;
+          updateScoreDisplay(this.scoreDisplayElement);
+          startGame(this);
+      }
+  }
+
+
+  // --------------------------- CONFIGURAÇÃO DO JOGO ---------------------------
+  const config = {
+      type: Phaser.AUTO,
+      width: GAME_WIDTH,
+      height: GAME_HEIGHT,
+      scale: {
+          mode: Phaser.Scale.FIT,
+          autoCenter: Phaser.Scale.CENTER_BOTH,
+          parent: 'game-container'
+      },
+      physics: {
+          default: 'arcade',
+          arcade: {
+              debug: true // coloque false quando finalizar testes
+          }
+      },
+      scene: {
+          preload: preload,
+          create: create,
+          update: update
+      }
+  };
+
+  // Inicialização
+  window.onload = function() {
+      new Phaser.Game(config);
+  };
   </script>
 
 </body>

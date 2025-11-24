@@ -1,183 +1,202 @@
-/* ---------------------------
-   Zoy Quiz — Phaser 3 + JSON
-   ----------------------------*/
+/* -----------------------------------------------------------------
+   Zoy Pong 2D — Controle Serial (Estabilidade Máxima de Renderização)
+   ----------------------------------------------------------------- */
 
-// Parâmetros do jogo
-const MODE = { name: 'Iniciação', doors: 2, pointsPerDoor: 5 };
-let gameSceneRef = null;
-let currentQuestion = null;
-let currentDoorObj = null;
+// --- Variáveis Globais ---
+let lastDistance = 20;
 let player;
-let score = Number(localStorage.getItem('zoy_score') || 0);
-document.getElementById('scoreDisplay').innerText = 'Score: ' + score;
+let ball;
+let opponentPaddle;
+let distanceDisplayElement;
+let player1Score = 0;
+let player2Score = 0;
 
-// ------------------------ Botão voltar ------------------------
-function goBackToMenu() {
-  if (window && window.electronAPI && window.electronAPI.navigateTo) {
-    window.electronAPI.navigateTo('menu');
-  } else {
-    window.location.href = 'zoy_jogos.html';
-  }
+// Dimensões e Constantes
+const GAME_WIDTH = 960;
+const GAME_HEIGHT = 640;
+const PADDLE_HEIGHT = 100;
+const PADDLE_WIDTH = 20;
+const BALL_SIZE = 20;
+
+
+// ------------------------ Controle IPC (Electron) ------------------------
+if (window.electronAPI && window.electronAPI.onDadosSerial) {
+    window.electronAPI.onDadosSerial((serialData) => {
+        const dataString = serialData.toString().trim();
+        const distanceMatch = dataString.match(/(\d+\.?\d*)/);
+
+        if (distanceMatch) {
+            const distance = parseFloat(distanceMatch[1]);
+            lastDistance = Phaser.Math.Clamp(distance, 5, 40);
+        }
+    });
 }
 
-// ------------------------ Helpers globais ------------------------
-window.zoyHelpers = {
-  score: score,
 
-  resetScore: function() {
-    this.score = 0;
-    localStorage.setItem('zoy_score', 0);
-    document.getElementById('scoreDisplay').innerText = 'Score: 0';
-    location.reload();
-  },
+// ------------------------ Mapeamento do Sensor ------------------------
+function mapDistanceToPaddleY(distance) {
+    const mappedY = Phaser.Math.Linear(distance, 5, 40, 540, 100);
+    return Phaser.Math.Clamp(mappedY, PADDLE_HEIGHT / 2, GAME_HEIGHT - PADDLE_HEIGHT / 2);
+}
 
-  setModeToEnem: function() {
-    MODE.name='ENEM';
-    MODE.doors=10;
-    MODE.pointsPerDoor=1;
-    alert('Modo alterado para ENEM — recarregue a página para ver 10 portas.');
-  },
 
-  loadDisciplina: async function(nome) {
-    try {
-      const resp = await fetch(`quiz_data/${nome}.json`);
-      const perguntas = await resp.json();
-      window.QUESTIONS = perguntas;
+// ------------------------ FUNÇÕES DE JOGO (Phaser) ------------------------
 
-      // esconder seletor e iniciar Phaser
-      document.getElementById('disciplinaSelector').style.display = 'none';
-      startPhaserGame();
-    } catch(e) {
-      console.error('Erro ao carregar disciplina:', e);
-      alert('Não foi possível carregar a disciplina.');
+function startGame(scene) {
+    ball.setPosition(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+    ball.body.setVelocity(0);
+
+    const directionX = Math.random() < 0.5 ? 1 : -1;
+    const initialSpeed = 300;
+
+    ball.body.setVelocityX(initialSpeed * directionX);
+    ball.body.setVelocityY(Phaser.Math.FloatBetween(-150, 150));
+}
+
+function hitPaddle(ball, paddle) {
+    let newVelocityX = ball.body.velocity.x * 1.05;
+    ball.body.setVelocityX(newVelocityX);
+
+    const diff = ball.y - paddle.y;
+    ball.body.setVelocityY(ball.body.velocity.y + diff * 5);
+}
+
+function updateScoreDisplay(element) {
+    if (element) {
+        element.innerHTML = `Jogador 1 (Sensor): <b>${player1Score}</b> | Jogador 2 (CPU): ${player2Score} | Distância: <span id="distanceValue">${lastDistance.toFixed(1)}</span> cm`;
     }
-  }
+}
+
+function goBackToMenu() {
+    if (window.electronAPI && window.electronAPI.goBack) {
+        window.electronAPI.goBack();
+    } else {
+        window.location.href = 'zoy_jogos.html';
+    }
+}
+
+
+// ------------------------ ESTRUTURA DA CENA ------------------------
+
+function preload() {}
+
+function create() {
+    const scene = this;
+    window._zoy_scene = scene;
+
+    scene.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    scene.cameras.main.setBackgroundColor('#000000');
+
+    const playerX = PADDLE_WIDTH / 2 + 10;
+    const cpuX = GAME_WIDTH - PADDLE_WIDTH / 2 - 10;
+
+    // 1. RAQUETE JOGADOR (Sensor)
+    player = scene.add.rectangle(playerX, GAME_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0x2ecc71);
+    player.setOrigin(0.5);
+
+    scene.physics.add.existing(player);
+    player.body.setImmovable(true);
+    player.body.setCollideWorldBounds(true);
+    player.body.setSize(PADDLE_WIDTH, PADDLE_HEIGHT);
+    player.body.setOffset(-PADDLE_WIDTH / 2, -PADDLE_HEIGHT / 2);
+
+    // 2. CPU
+    opponentPaddle = scene.add.rectangle(cpuX, GAME_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT, 0xe74c3c);
+    opponentPaddle.setOrigin(0.5);
+
+    scene.physics.add.existing(opponentPaddle);
+    opponentPaddle.body.setImmovable(true);
+    opponentPaddle.body.setCollideWorldBounds(true);
+    opponentPaddle.body.setSize(PADDLE_WIDTH, PADDLE_HEIGHT);
+    opponentPaddle.body.setOffset(-PADDLE_WIDTH / 2, -PADDLE_HEIGHT / 2);
+
+    // 3. BOLA
+    ball = scene.add.circle(GAME_WIDTH / 2, GAME_HEIGHT / 2, BALL_SIZE / 2, 0xffa500);
+    ball.setOrigin(0.5);
+
+    scene.physics.add.existing(ball);
+    ball.body.setCircle(BALL_SIZE / 2);
+    ball.body.setOffset(-BALL_SIZE / 2, -BALL_SIZE / 2);
+    ball.body.setCollideWorldBounds(true);
+    ball.body.setBounce(1, 1);
+
+    // Linha central
+    const lineGraphics = scene.add.graphics({ lineStyle: { width: 2, color: 0x888888, alpha: 0.5 } });
+    lineGraphics.beginPath();
+    lineGraphics.moveTo(GAME_WIDTH / 2, 0);
+    lineGraphics.lineTo(GAME_WIDTH / 2, GAME_HEIGHT);
+    lineGraphics.strokePath();
+
+    // Colisões
+    scene.physics.add.collider(ball, player, hitPaddle, null, scene);
+    scene.physics.add.collider(ball, opponentPaddle, hitPaddle, null, scene);
+
+    distanceDisplayElement = document.getElementById('distanceValue');
+    scene.scoreDisplayElement = document.getElementById('scoreDisplay');
+
+    startGame(scene);
+}
+
+function update() {
+
+    // --------------------------- RAQUETE JOGADOR ---------------------------
+    if (distanceDisplayElement) {
+        distanceDisplayElement.innerText = lastDistance.toFixed(1);
+    }
+
+    const targetY = mapDistanceToPaddleY(lastDistance);
+
+    player.y = Phaser.Math.Linear(player.y, targetY, 0.2);
+    player.body.updateFromGameObject();
+
+    // --------------------------- RAQUETE CPU ---------------------------
+    const cpuTrackingSpeed = 5;
+    let targetCpuY = ball.body.velocity.x > 0 ? ball.y : GAME_HEIGHT / 2;
+
+    if (Math.abs(targetCpuY - opponentPaddle.y) > cpuTrackingSpeed) {
+        opponentPaddle.y += (targetCpuY > opponentPaddle.y ? cpuTrackingSpeed : -cpuTrackingSpeed);
+    }
+
+    opponentPaddle.y = Phaser.Math.Clamp(opponentPaddle.y, PADDLE_HEIGHT / 2, GAME_HEIGHT - PADDLE_HEIGHT / 2);
+    opponentPaddle.body.updateFromGameObject();
+
+    // --------------------------- PONTUAÇÃO ---------------------------
+    if (ball.x < 0) {
+        player2Score++;
+        updateScoreDisplay(this.scoreDisplayElement);
+        startGame(this);
+    } else if (ball.x > GAME_WIDTH) {
+        player1Score++;
+        updateScoreDisplay(this.scoreDisplayElement);
+        startGame(this);
+    }
+}
+
+
+// --------------------------- CONFIGURAÇÃO DO JOGO ---------------------------
+const config = {
+    type: Phaser.AUTO,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        parent: 'game-container'
+    },
+    physics: {
+        default: 'arcade',
+        arcade: {
+            debug: true
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
 };
 
-// ------------------------ Modal Oráculo ------------------------
-document.getElementById('oracleOverlay').addEventListener('click', (e)=>{
-  if(e.target === document.getElementById('oracleOverlay')) e.stopPropagation();
-});
-
-function openOracleForDoor(scene, doorObj){
-  currentQuestion = QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
-  currentDoorObj = doorObj;
-  gameSceneRef = scene;
-
-  showOracleModal(currentQuestion);
-  scene.physics.world.pause();
-}
-
-function showOracleModal(q){
-  const overlay = document.getElementById('oracleOverlay');
-  const qEl = document.getElementById('oracleQuestion');
-  const opts = document.getElementById('oracleOptions');
-  const footer = document.getElementById('oracleFooter');
-
-  qEl.innerText = q.question;
-  opts.innerHTML = '';
-  q.options.forEach((optText, idx)=>{
-    const btn = document.createElement('button');
-    btn.className = 'optBtn';
-    btn.innerText = optText;
-    btn.onclick = ()=>handleAnswer(idx);
-    opts.appendChild(btn);
-  });
-
-  footer.innerText = 'Escolha uma opção para o Oráculo avaliar.';
-  overlay.style.visibility = 'visible';
-  overlay.setAttribute('aria-hidden','false');
-}
-
-function closeOracleModal(){
-  const overlay = document.getElementById('oracleOverlay');
-  overlay.style.visibility = 'hidden';
-  overlay.setAttribute('aria-hidden','true');
-}
-
-function handleAnswer(selectedIndex){
-  const footer = document.getElementById('oracleFooter');
-  if(selectedIndex === currentQuestion.answer){
-    footer.innerText = '✅ Correto! ' + currentQuestion.explanation;
-
-    if(currentDoorObj && !currentDoorObj.opened){
-      currentDoorObj.opened = true;
-      score += MODE.pointsPerDoor;
-      localStorage.setItem('zoy_score', score);
-      document.getElementById('scoreDisplay').innerText = 'Score: ' + score;
-
-      if(gameSceneRef){
-        gameSceneRef.time.delayedCall(800, ()=>{
-          try{ gameSceneRef.physics.world.remove(currentDoorObj.body); }catch(e){}
-        });
-        if(currentDoorObj.setFillStyle) currentDoorObj.setFillStyle(0x2ecc71);
-      }
-    }
-  } else {
-    footer.innerText = '❌ Errado. Dica: ' + currentQuestion.explanation;
-  }
-
-  setTimeout(()=>{
-    closeOracleModal();
-    if(gameSceneRef) gameSceneRef.physics.world.resume();
-  },1200);
-}
-
-// ------------------------ Phaser ------------------------
-function startPhaserGame(){
-  const config = {
-    type: Phaser.AUTO,
-    parent: 'game-container',
-    width: 960,
-    height: 640,
-    backgroundColor: '#87ceeb',
-    physics: { default: 'arcade', arcade: { debug: false } },
-    scene: { preload, create, update }
-  };
-  new Phaser.Game(config);
-}
-
-function preload(){}
-function create(){
-  const scene = this;
-  window._zoy_scene = scene;
-
-  // jogador
-  player = scene.add.rectangle(120,320,40,40,0x222222);
-  scene.physics.add.existing(player);
-  player.body.setCollideWorldBounds(true);
-  player.body.setSize(40,40);
-
-  // portas
-  scene.doors = [];
-  const startY = 200, gap = 160;
-  for(let i=0;i<MODE.doors;i++){
-    const y = startY + i*gap;
-    const door = scene.add.rectangle(760, y, 64, 120, 0x8B4513);
-    scene.physics.add.existing(door, true);
-    door.isDoor = true;
-    door.opened = false;
-    door.doorId = i+1;
-    scene.doors.push(door);
-  }
-
-  scene.doors.forEach(d=>{
-    scene.physics.add.overlap(player, d, (p,dObj)=>{
-      if(!dObj.opened) openOracleForDoor(scene, dObj);
-    });
-  });
-
-  scene.physics.world.setBounds(0,0,960,640);
-  scene.cursors = scene.input.keyboard.createCursorKeys();
-  scene.add.text(12,610,'Use as setas para mover o Zoy. Vá até uma porta para o Oráculo.',{fontSize:'14px', color:'#000'});
-}
-
-function update(){
-  const speed = 220;
-  if(!this.cursors) return;
-  player.body.setVelocity(0);
-  if(this.cursors.left.isDown) player.body.setVelocityX(-speed);
-  if(this.cursors.right.isDown) player.body.setVelocityX(speed);
-  if(this.cursors.up.isDown) player.body.setVelocityY(-speed);
-  if(this.cursors.down.isDown) player.body.setVelocityY(speed);
-}
+// Inicialização
+window.onload = function() {
+    new Phaser.Game(config);
+};
