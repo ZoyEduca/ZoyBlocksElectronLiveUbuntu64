@@ -333,7 +333,7 @@ ipcMain.handle("abrir-zoygames", () => {
   });
 
   gptWindow.loadFile(
-    path.join(__dirname, "..", "renderer", "views", "zoyjogos", "zoy_quiz.html")
+    path.join(__dirname, "..", "renderer", "views", "zoyjogos", "zoyjogos.html")
   );
 
   // Habilita DevTools | Desative o DevTools em produção
