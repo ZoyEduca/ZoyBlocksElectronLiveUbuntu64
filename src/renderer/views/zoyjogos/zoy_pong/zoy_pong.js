@@ -1,8 +1,8 @@
-/* 
-* -----------------------------------------------------------------
-*   Zoy Pong 2D — Controle Serial (Estabilidade Máxima de Renderização)
-* -----------------------------------------------------------------
-*/
+/*
+ * -----------------------------------------------------------------
+ *   Zoy Pong 2D — Controle Serial (Estabilidade Máxima de Renderização)
+ * -----------------------------------------------------------------
+ */
 
 // --- Variáveis Globais ---
 let lastDistance = 20.0;
@@ -99,6 +99,9 @@ function create() {
   window._zoy_scene = scene;
 
   scene.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  // Configura quais paredes do mundo são sólidas (esquerda, direita, cima, baixo)
+  // false = aberta (bola passa), true = sólida (bola bate)
+  scene.physics.world.setBoundsCollision(false, false, true, true);
   scene.cameras.main.setBackgroundColor("#000000");
 
   const playerX = PADDLE_WIDTH / 2 + 10;
@@ -181,7 +184,7 @@ function update() {
   const targetY = mapDistanceToPaddleY(lastDistance);
 
   // LERP correto: from = player.y, to = targetY, t = 0..1
-  player.y = Phaser.Math.Linear(player.y, targetY, 0.2);
+  player.y = Phaser.Math.Linear(player.y, targetY, 0.1);
   player.body.updateFromGameObject();
 
   // --------------------------- RAQUETE CPU ---------------------------
@@ -202,14 +205,52 @@ function update() {
 
   // --------------------------- PONTUAÇÃO ---------------------------
   if (ball.x < 0) {
+    // Ponto para CPU
     player2Score++;
     updateScoreDisplay(this.scoreDisplayElement);
-    startGame(this);
+    checkVictory(this); // Verifica se alguém ganhou antes de reiniciar
   } else if (ball.x > GAME_WIDTH) {
+    // Ponto para Jogador
     player1Score++;
     updateScoreDisplay(this.scoreDisplayElement);
-    startGame(this);
+    checkVictory(this); // Verifica se alguém ganhou antes de reiniciar
   }
+}
+
+function checkVictory(scene) {
+  const MAX_SCORE = 5; // Jogo acaba com 5 pontos
+
+  if (player1Score >= MAX_SCORE) {
+    finishGame(scene, "JOGADOR VENCEU!");
+  } else if (player2Score >= MAX_SCORE) {
+    finishGame(scene, "CPU VENCEU!");
+  } else {
+    // Ninguém ganhou ainda, continua o jogo
+    startGame(scene);
+  }
+}
+
+function finishGame(scene, message) {
+  // Para a bola
+  ball.body.setVelocity(0, 0);
+  ball.setPosition(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+
+  // Cria um texto grande na tela
+  let text = scene.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, message, {
+    fontSize: "64px",
+    fill: "#ffffff",
+    backgroundColor: "#000000",
+  });
+  text.setOrigin(0.5);
+
+  // Reinicia o jogo após 3 segundos
+  scene.time.delayedCall(3000, () => {
+    player1Score = 0;
+    player2Score = 0;
+    updateScoreDisplay(scene.scoreDisplayElement);
+    text.destroy(); // Remove o texto de vitória
+    startGame(scene);
+  });
 }
 
 // --------------------------- CONFIGURAÇÃO DO JOGO ---------------------------
@@ -225,6 +266,7 @@ const config = {
   physics: {
     default: "arcade",
     arcade: {
+      // Modo debug para visualizar corpos físicos
       debug: true, // coloque false quando finalizar testes
     },
   },
