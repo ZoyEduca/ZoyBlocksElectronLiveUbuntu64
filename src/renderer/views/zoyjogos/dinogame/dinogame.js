@@ -57,10 +57,10 @@ new Phaser.Game(config);
 
 // ------------------------ PRELOAD ------------------------
 function preload() {
-    this.load.image("dino", "dino.png");
-    this.load.image("dino_duck", "dino_duck.png");
-    this.load.image("ground", "ground.png");
-    this.load.image("cactus", "cactus.png");
+    this.load.image("dino", "sprites/dino.png");
+    this.load.image("dino_duck", "sprites/dino_duck.png");
+    this.load.image("ground", "sprites/ground.png");
+    this.load.image("cactus", "sprites/cactus.png");
 }
 
 
@@ -184,4 +184,12 @@ function update() {
 // ------------------------ GAME OVER ------------------------
 function gameOver() {
     location.reload();
+}
+
+function goBack() {
+    if (window.electronAPI && window.electronAPI.goBack) {
+    window.electronAPI.goBack();
+    } else {
+    window.location.href = 'zoy_jogos.html';
+    }
 }
