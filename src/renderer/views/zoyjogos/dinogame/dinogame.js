@@ -1,19 +1,20 @@
 /* -----------------------------------------------------------
-   ZOY DINO — CONTROLE COM 1 SENSOR (ULTRASSOM) E MOVIMENTO CLÁSSICO
-   ----------------------------------------------------------- */
+   ZOY DINO — CONTROLE COM 1 SENSOR (ULTRASSOM) 
+   ----------------------------------------------------------- 
+*/
 
 // Variável única para a distância, unificada com a lógica do Pong
 let sensorDistancia = 100.0; 
 
 let player;
-let ground;
+let ground; // 
 let obstacles = [];
 
 let score = 0;
 let scoreText;
 
 let isDucking = false;
-let isPausedBySensor = false; // Estado para o "Parar"
+let isPlayGame = false; // Indica se o jogo não foi iniciado ou personagem morto
 
 // Velocidade base dos obstáculos (movimento horizontal)
 const BASE_SPEED = -350; 
@@ -67,6 +68,9 @@ function preload() {
 // ------------------------ CREATE ------------------------
 function create() {
 
+    // Jogo iniciado
+    isPlayGame = true;
+
     this.cameras.main.setBackgroundColor('#f7f7f7'); 
     
     // Chão
@@ -114,15 +118,8 @@ function spawnObstacle() {
 // ------------------------ UPDATE LOOP ------------------------
 function update() {
 
-    // 1. Lógica do PAUSAR/PARAR (12 <= dist <= 18)
-    if (sensorDistancia >= 12 && sensorDistancia <= 18) {
-        isPausedBySensor = true;
-    } else {
-        isPausedBySensor = false;
-    }
-
-    // Pontuação
-    if (!isPausedBySensor) {
+    // 1. Pontuação
+    if (isPlayGame) {
         score++;
         // Exibe a pontuação e também o valor do sensor
         scoreText.innerHTML = `Score: ${Math.floor(score / 10)} | Distância: ${sensorDistancia.toFixed(1)} cm`; 
@@ -130,26 +127,17 @@ function update() {
          scoreText.innerHTML = `Score: ${Math.floor(score / 10)} (PARADO) | Distância: ${sensorDistancia.toFixed(1)} cm`;
     }
 
-    // Pausa ou retoma o movimento HORIZONTAL dos obstáculos
-    obstacles.forEach(o => {
-        if (isPausedBySensor) {
-            o.setVelocityX(0); 
-        } else {
-            o.setVelocityX(BASE_SPEED); 
-        }
-    });
-
     // 2. Controle do Dino
 
     // ------------------------ SALTO (dist < 10) ------------------------
     // Só pula se estiver tocando o chão, não estiver abaixado, e não estiver em PAUSAR
-    if (sensorDistancia < 10 && player.body.touching.down && !isDucking && !isPausedBySensor) {
+    if (sensorDistancia < 10 && player.body.touching.down && !isDucking && isPlayGame) {
         player.setVelocityY(-800); 
     }
 
     // ------------------------ ABAIXAR (20 <= dist <= 30) ------------------------
     // Só abaixa se estiver tocando o chão e não estiver em PAUSAR
-    if (sensorDistancia >= 20 && sensorDistancia <= 30 && player.body.touching.down && !isPausedBySensor) {
+    if (sensorDistancia >= 20 && sensorDistancia <= 30 && player.body.touching.down && isPlayGame) {
 
         if (!isDucking) {
             isDucking = true;
@@ -160,7 +148,7 @@ function update() {
             player.body.setSize(player.width, player.height, true); 
         }
 
-    } else if (isDucking && (sensorDistancia < 20 || sensorDistancia > 30 || isPausedBySensor)) {
+    } else if (isDucking && (sensorDistancia < 20 || sensorDistancia > 30 || isPlayGame)) {
         isDucking = false;
         player.setTexture("dino");
         player.y -= 20; // Move para cima
@@ -170,7 +158,7 @@ function update() {
     }
 
 
-    // Remove cactos que saíram da tela
+    // Remove cactos que saíram da tela - Limpeza de Memória
     obstacles = obstacles.filter(o => {
         if (o.x < -50) { 
             o.destroy();
