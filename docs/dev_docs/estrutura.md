@@ -15,33 +15,27 @@ zoyblocks/
 │   ├── chatbot_fast.py
 │   └── precompute_embeddings.py
 │
-├── arduino_cli/                   # binários do arduino-cli
-│   ├── linux/arduino-cli
-│   └── windows/arduino-cli.exe
-│
 ├── node_modules/                  # ambiente node
 |
 ├── src/                           # estrutura-fonte principal
 │   ├── assets/               # arquivos estáticos globais
 │   │   ├── blocks/           # conjunto de blocos para modo gravar e live
-│   │   │   ├── modo_gravar/            # blocos para modo gravar
-│   │   │   ├── modo_live/              # blocos para modo live
-│   │   │   │   ├── arduino/
-│   │   │   │   │   ├── nano_blocks/
-│   │   │   │   │   └── uno_blocks/
-│   │   │   │   ├── basic_blocks/       #blocos básicos presente em todos os dispositivos
-│   │   │   │   │   ├── cates/
-│   │   │   │   │   │   ├── controle.js
-│   │   │   │   │   │   ├── funcao.js
-│   │   │   │   │   │   └──  basic_blocks.js
-│   │   │   │   │   └──  basic_blocks.js
+│   │   │   ├── arduino/
+│   │   │   │   ├── nano_blocks/
+│   │   │   │   └── uno_blocks/
+│   │   │   ├── basic_blocks/       #blocos básicos presente em todos os dispositivos
+│   │   │   │   ├── cates/
+│   │   │   │   │   ├── controle.js
+│   │   │   │   │   ├── funcao.js
+│   │   │   │   │   └──  outras.js
+│   │   │   │   └──  basic_blocks.js
 │   │   │   │   └── zoy/
 │   │   │   │   │   ├── zoy_maker_blocks/
 │   │   │   │   │   └── zoy_steam_blocks/
 │   │   ├── icons/
 │   │   ├── imgs/
 │   │   ├── libs/
-│   │   │   ├── blockduino/    # arquivos da biblioteca blocklyduino
+│   │   │   ├── phaser/        # arquivos da biblioteca phaser
 │   │   │   ├── blockly/       #arquivo copiado da node_module por script
 │   │   │   └── bootstrap/     # bootstrap local
 │   │   └── styles/
@@ -61,10 +55,10 @@ zoyblocks/
 │   │   │   │   ├── home.html
 │   │   │   │   ├── home.css
 │   │   │   │   └── home.js
-│   │   │   └── outra_view_ex/    # outra tela (exemplo)
-│   │   │       ├── outra_view_ex.html
-│   │   │       ├── outra_view_ex.css
-│   │   │       └── outra_view_ex.js
+│   │   │   ├── terminal/ 
+│   │   │   ├── blockly_Games/ 
+│   │   │   ├── zoygpt/ 
+│   │   │   └── zoyjogos/
 │   │   └── utils/                # funções de utilitarios para o front end
 │   │   │   └── assetLoader.js    # trata tipos de importação(css,js,img ...)
 │
@@ -73,6 +67,7 @@ zoyblocks/
 │   └── bin/               # (Linux/macOS)
 │
 ├── .gitignore
+├── .env
 ├── LICENSE
 ├── package-lock.json
 ├── package.json

@@ -23,6 +23,7 @@
                 <img src="../../../assets/imgs/logo_zoy.png" alt="Logo Zoy" class="logo-img" title="Zoy Blocks v0.7.0">
             </a>
 
+            <!-- Botão Executar Código -->
             <button class="btn btn-success py-2 me-3 my-auto" id="btnExecutarCodigo">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                     class="bi bi-caret-right-fill" viewBox="0 0 16 16">
@@ -30,7 +31,8 @@
                         d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z" />
                 </svg>
             </button>
-
+            
+            <!-- Botão Abrir ZoyGPT -->
             <button id="abrirZoyGPTBtn" class="btn btn-secondary me-3 my-auto d-none d-lg-block">Abrir ZoyGPT</button>
 
 
@@ -146,7 +148,19 @@
                 </div>
 
                 <!-- Wifi -->
-                <!-- <div id="connectWifi"></div> -->
+                <div id="connectWifi">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <h6 class="text-muted">IP da Placa</h6>
+                        </div>
+                        <div class="col-6">
+                            <input type="text" id="ipRobo" class="form-control" placeholder="ex: 192.168.1.123">
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-info w-100 mb-2" onclick="enviarComandoWifi()">Enviar Comando Wi-Fi</button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Bluetooth -->
                 <!-- <div id="connectBluetooth"></div> -->
@@ -172,10 +186,10 @@
                 <pre id="areaCodigo"># Código JavaScript aparecerá aqui</pre>
             </div>
 
-
+            <!-- Terminal completo -->
             <div class="mt-3">
                 <div class="terminal-header">
-                    <h6>Terminal de Comunicação</h6>
+                    <h6 class="text-muted">Terminal de Comunicação</h6>
                     <div id="terminal"></div>
                     <div class="terminal-controles">
                         <button class="btn btn-sm btn-info" id="abrirTerminalCompletoBtn">Terminal Completo</button>
