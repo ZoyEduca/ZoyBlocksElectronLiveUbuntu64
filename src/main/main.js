@@ -2,6 +2,10 @@
 const serialService = require("../main/services/serial-services");
 const blocklyService = require("../main/services/blockly-service");
 
+const wifi = require("./services/wifi-services");
+
+const dm = require("./services/device-manager");
+
 const {
   app,
   BrowserWindow,
@@ -80,7 +84,17 @@ const createWindow = () => {
 };
 
 
+ipcMain.handle("wifi:conectar", async (e, ip) => {
+    return wifi.conectarWifi(ip);
+});
 
+ipcMain.handle("wifi:enviar", async (e, cmd) => {
+    return wifi.enviarComandoWifi(cmd);
+});
+
+ipcMain.handle("wifi:desconectar", async () => {
+    return wifi.desconectarWifi();
+});
 
 // ----------------------------------------------------------------------------
 // ----------- Handlers do IPC para iniciar os processos do chatbot -----------
@@ -262,6 +276,12 @@ ipcMain.handle("enviar-comando-serial", (event, comando) =>
 );
 
 
+
+ipcMain.handle("dm:conectarUSB",  (e, porta) => dm.conectarUSB(porta));
+ipcMain.handle("dm:conectarWifi", (e, ip)    => dm.conectarWifi(ip));
+ipcMain.handle("dm:enviar",       (e, cmd)   => dm.enviar(cmd));
+ipcMain.handle("dm:desconectar",  () => dm.desconectar());
+ipcMain.handle("dm:status",       () => dm.getStatus());
 
 
 

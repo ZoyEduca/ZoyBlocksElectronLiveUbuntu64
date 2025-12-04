@@ -81,7 +81,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    onDadosSerial: (callback) => ipcRenderer.on('onDadosSerial', (event, data) => callback(data)),
    onErroSerial: (callback) => ipcRenderer.on('onErroSerial', (event, data) => callback(data)),
    onRespostaSerial: (callback) => ipcRenderer.on('onRespostaSerial', (event, data) => callback(data)),
-
+   
   // Funções para envio de dados e execução de código
    executarCodigo: (codigo) => ipcRenderer.invoke('executar-codigo', codigo),
    enviarComandoSerial: (comando) => ipcRenderer.invoke('enviar-comando-serial', comando),
@@ -94,4 +94,21 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Adicionando a função openExternal no contexto
   openExternal: (url) => ipcRenderer.invoke("open-external", url),
 
+});
+
+contextBridge.exposeInMainWorld("wifiAPI", {
+    conectarWifi: (ip) => ipcRenderer.invoke("wifi:conectar", ip),
+    enviarWifi: (cmd) => ipcRenderer.invoke("wifi:enviar", cmd),
+    desconectarWifi: () => ipcRenderer.invoke("wifi:desconectar"),
+    onStatusWifi: (cb) => ipcRenderer.on("onStatusWifi", (_, data) => cb(data)),
+    onDadosWifi: (cb) => ipcRenderer.on("onDadosWifi", (_, data) => cb(data)),
+});
+
+
+contextBridge.exposeInMainWorld("deviceManager", {
+    conectarUSB: (porta) => ipcRenderer.invoke("dm:conectarUSB", porta),
+    conectarWifi: (ip)    => ipcRenderer.invoke("dm:conectarWifi", ip),
+    enviar:       (cmd)   => ipcRenderer.invoke("dm:enviar", cmd),
+    desconectar:          () => ipcRenderer.invoke("dm:desconectar"),
+    status:              () => ipcRenderer.invoke("dm:status")
 });

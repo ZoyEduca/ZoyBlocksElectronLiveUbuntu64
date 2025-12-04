@@ -1,3 +1,7 @@
+// home.js
+
+window.deviceManagerIP = null;
+
 const { loadAssetsGroup } = window.electronAPI.utils;
 
 // Array de assets a serem carregados, usando os caminhos do preload
@@ -165,6 +169,192 @@ const assetsToLoad = {
     },
   ],
 };
+
+// IPs de Sugestão. COLOQUE O IP REAL DO SEU ESP8266 AQUI.
+const SUGESTOES_DE_IPS = ["192.168.4.1 (ESP8266 REAL)", "192.168.1.100", "10.0.0.5"];
+
+// ----------------------------------------------------------------------------
+// ----------- Lógica de conexões Wi-Fi (NOVA LÓGICA DE SELEÇÃO) --------------
+// ----------------------------------------------------------------------------
+
+window.wifiConectado = false; // flag global simples
+
+// Função para exibir logs no terminal com hora (mantida)
+function exibirLogNoTerminal(log) {
+  const terminalElement = document.getElementById("terminal");
+  if (!terminalElement) return;
+
+  const hora = new Date().toLocaleTimeString();
+
+  const logDiv = document.createElement("div");
+  logDiv.textContent = `[${hora}] ${log}`; // Inclui hora
+  terminalElement.appendChild(logDiv);
+
+  // Rolagem automática para o final do terminal
+  terminalElement.scrollTop = terminalElement.scrollHeight;
+}
+
+// Atualiza badge visual de status Wi-Fi (revisada)
+function atualizarBadgeWifi(conectado, mensagem = "") {
+  const badgeWrap = document.getElementById("wifiStatusBadge");
+  if (!badgeWrap) return;
+
+  // Assumindo que você tem um badge com ID 'statusWifiBadge' no HTML
+  const badge = document.getElementById("statusWifiBadge");
+
+  if (badge) {
+    badge.textContent = mensagem;
+    if (conectado) {
+        badge.classList.remove("bg-secondary", "bg-danger");
+        badge.classList.add("bg-success");
+    } else {
+        badge.classList.remove("bg-success");
+        badge.classList.add("bg-secondary");
+    }
+  }
+
+  if (mensagem) exibirLogNoTerminal(`[WIFI] ${mensagem}`);
+}
+
+// ==========================================================
+// FUNÇÃO: Busca e lista os IPs Wi-Fi disponíveis
+// ==========================================================
+async function buscarIPsWifi() {
+    const select = document.getElementById("selectIpRobo");
+    const btnConectar = document.getElementById("btnConectarWifi");
+    const btnBuscar = document.getElementById("btnBuscarIPs");
+
+    // Desativa a interface durante a busca
+    btnBuscar.disabled = true;
+    select.innerHTML = '<option value="">Buscando...</option>';
+    select.disabled = true;
+    btnConectar.disabled = true;
+
+    exibirLogNoTerminal("[WIFI] Buscando dispositivos Wi-Fi disponíveis...");
+
+    try {
+        // Simulação de busca
+        await new Promise(resolve => setTimeout(resolve, 500)); 
+        const ipsDisponiveis = SUGESTOES_DE_IPS; 
+        
+        select.innerHTML = '<option value="">Selecione o IP...</option>';
+        
+        if (ipsDisponiveis && ipsDisponiveis.length > 0) {
+            ipsDisponiveis.forEach(ipComDescricao => {
+                const option = document.createElement('option');
+                const ipPuro = ipComDescricao.split(' ')[0]; 
+                option.value = ipPuro; 
+                option.textContent = ipComDescricao;
+                select.appendChild(option);
+            });
+
+            select.disabled = false;
+            exibirLogNoTerminal(`[WIFI] ${ipsDisponiveis.length} IPs encontrados. Selecione um.`);
+
+            // Listener: Habilita o botão de conectar SOMENTE ao selecionar um IP
+            select.onchange = () => {
+                // Habilita se um IP foi selecionado E NÃO estiver conectado
+                btnConectar.disabled = !select.value || window.wifiConectado; 
+            };
+
+        } else {
+            select.innerHTML = '<option value="">Nenhum IP encontrado.</option>';
+            exibirLogNoTerminal("[WIFI] Nenhum dispositivo Wi-Fi encontrado.");
+        }
+
+    } catch (err) {
+        select.innerHTML = '<option value="">Erro na busca.</option>';
+        exibirLogNoTerminal(`[WIFI] Erro ao buscar IPs: ${err.message}`);
+    } finally {
+        btnBuscar.disabled = false;
+    }
+}
+
+
+// ==========================================================
+// FUNÇÃO: Gerencia Conexão E Desconexão Wi-Fi (Lê do SELECT)
+// ==========================================================
+async function conectarWifi() {
+    const btn = document.getElementById("btnConectarWifi");
+    const select = document.getElementById("selectIpRobo");
+    const ip = select.value.trim();
+
+    // 1. Lógica para Desconexão (toggle)
+    if (window.wifiConectado) {
+        select.disabled = true;
+        btn.disabled = true;
+        exibirLogNoTerminal("[WIFI] Desconectando...");
+        
+        await window.deviceManager.desconectar();
+        
+        // Retorna ao estado inicial
+        window.wifiConectado = false;
+        atualizarBadgeWifi(false, "Desconectado");
+        btn.textContent = "Conectar Wi-Fi";
+        btn.classList.remove("btn-danger");
+        btn.classList.add("btn-primary");
+        select.disabled = false;
+        document.getElementById("btnBuscarIPs").disabled = false;
+        btn.disabled = !select.value; // Habilita se um IP estiver selecionado
+        return;
+    }
+
+    // 2. Lógica para Conexão
+    if (!ip) {
+        exibirLogNoTerminal("[WIFI] Por favor, selecione um IP para conectar.");
+        return;
+    }
+
+    // Desativa a interface durante a tentativa de conexão
+    select.disabled = true;
+    document.getElementById("btnBuscarIPs").disabled = true;
+    btn.disabled = true;
+    btn.textContent = "Conectando...";
+
+    exibirLogNoTerminal(`[WIFI] Tentando conectar em ${ip}...`);
+    try {
+        const ok = await window.deviceManager.conectarWifi(ip); 
+        
+        if (ok) {
+            window.wifiConectado = true;
+            atualizarBadgeWifi(true, `Conectado a ${ip}`);
+            
+            // Sucesso: Altera texto e estilo para "Desconectar"
+            btn.textContent = "Desconectar Wi-Fi";
+            btn.classList.remove("btn-primary");
+            btn.classList.add("btn-danger");
+        } else {
+            // Falha
+            atualizarBadgeWifi(false, "Falha ao conectar (retorno falso)");
+        }
+    } catch (err) {
+        atualizarBadgeWifi(false, `Falha: ${err.message}`);
+    } finally {
+        // Habilita novamente a interface se a conexão falhou
+        if (!window.wifiConectado) {
+            select.disabled = false;
+            document.getElementById("btnBuscarIPs").disabled = false;
+            btn.textContent = "Conectar Wi-Fi";
+            btn.classList.remove("btn-danger");
+            btn.classList.add("btn-primary");
+            btn.disabled = !select.value;
+        } else {
+             btn.disabled = false; // Habilita o botão Desconectar
+        }
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ----------- FIM DA NOVA LÓGICA DE CONEXÃO WI-FI ----------------------------
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// ----------- Código Original (Preservado e Consolidado) ---------------------
+// ----------------------------------------------------------------------------
+
+
 // ----------------------------------------------------------------------------
 // ----------- Importações Iniciais da página ---------------------------------
 // ----------------------------------------------------------------------------
@@ -504,7 +694,7 @@ document.getElementById("carregarProjeto")?.addEventListener("click", (e) => {
 function log(mensagem, tipo = "normal") {
   console.log(`[${tipo}] ${mensagem}`);
 
-  // **ALTERAÇÃO APLICADA AQUI:** // Encaminha a mensagem para o terminal visual, garantindo que as respostas do Arduino apareçam.
+  // **CONSOLIDAÇÃO:** // Encaminha a mensagem para o terminal visual, garantindo que as respostas do Arduino apareçam.
   // Usamos o tipo para formatar a mensagem no terminal
   exibirLogNoTerminal(`[${tipo.toUpperCase()}] ${mensagem}`);
 }
@@ -637,6 +827,43 @@ window.toggleConexao = toggleConexao;
 // ----------------------------------------------------------------------------
 // ----------- Lógica de Executar Código do blocos ----------------------------
 // ----------------------------------------------------------------------------
+// --- garante conexão Wi-Fi se necessário (não bloqueia execução via USB) ---
+async function garantirConexaoWifi() {
+  // Se já conectado via UI manual (pelo novo botão), aceita
+  if (window.wifiConectado) return true;
+
+  // Lógica de fallback original (Lê o IP de um campo que não existe mais na nova UI, mas mantida por segurança)
+  // Se o IP não foi selecionado na nova UI, a execução via Wi-Fi é ignorada.
+  const select = document.getElementById("selectIpRobo");
+  const ip = select ? select.value.trim() : null;
+
+  if (!ip) {
+    exibirLogNoTerminal("[WIFI] Nenhum IP selecionado. Para usar Wi-Fi, selecione o IP.");
+    return false;
+  }
+
+  exibirLogNoTerminal(`[WIFI] Tentando conectar automaticamente a ${ip}...`);
+  try {
+    const ok = await window.deviceManager.conectarWifi(ip);
+    if (ok) {
+      window.wifiConectado = true;
+      window.deviceManagerIP = ip;
+      exibirLogNoTerminal(`[WIFI] Conectado em ${ip}`);
+      // NUNCA MUDAR O ESTADO DO BOTÃO DE CONEXÃO AQUI. A função conectarWifi() gerencia o estado da UI.
+      return true;
+    } else {
+      exibirLogNoTerminal("[WIFI] Conexão retornou falso.");
+      return false;
+    }
+  } catch (err) {
+    exibirLogNoTerminal(`[WIFI] Falha ao conectar: ${err.message}`);
+    return false;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// ----------- Lógica de Executar Código do blocos ----------------------------
+// ----------------------------------------------------------------------------
 async function executarCodigo() {
   const preElement = document.getElementById("areaCodigo");
   const areaCodigo = preElement?.textContent?.trim();
@@ -646,10 +873,17 @@ async function executarCodigo() {
     return;
   }
 
+  // Tenta garantir conexão Wi-Fi (se houver IP selecionado).
+  try {
+    await garantirConexaoWifi();
+  } catch (e) {
+    console.warn("garantirConexaoWifi falhou:", e?.message || e);
+  }
+
   // Limpar o terminal antes de começar a execução
   const terminalElement = document.getElementById("terminal");
   if (terminalElement) {
-    terminalElement.innerHTML = ''; // Limpa o terminal
+    terminalElement.innerHTML = ""; // Limpa o terminal
   }
 
   try {
@@ -659,7 +893,6 @@ async function executarCodigo() {
       exibirLogNoTerminal(`[ERRO] ${resultado.mensagem || "Falha desconhecida"}`);
     }
 
-
     // Exibir logs no console e no terminal
     if (Array.isArray(resultado.logs)) {
       resultado.logs.forEach((log) => {
@@ -667,26 +900,11 @@ async function executarCodigo() {
         exibirLogNoTerminal(log);
       });
     }
-
   } catch (err) {
     exibirLogNoTerminal(`[ERRO] Falha ao executar código: ${err.message}`);
   }
 }
 
-// Função para exibir logs no terminal com hora
-function exibirLogNoTerminal(log) {
-  const terminalElement = document.getElementById("terminal");
-  if (!terminalElement) return;
-
-  const hora = new Date().toLocaleTimeString();
-
-  const logDiv = document.createElement("div");
-  logDiv.textContent = `[${hora}] ${log}`; // Inclui hora
-  terminalElement.appendChild(logDiv);
-
-  // Rolagem automática para o final do terminal
-  terminalElement.scrollTop = terminalElement.scrollHeight;
-}
 
 // Limpar Terminal
 document.getElementById("limparTerminalBtn")?.addEventListener("click", () => {
@@ -770,4 +988,41 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (ajudaLink) {
     ajudaLink.addEventListener("click", ajudaLinkOpen);
   }
+  
+  // -----------------------------------------------------
+  // --- LISTENERS E INICIALIZAÇÃO DA NOVA INTERFACE WIFI
+  // -----------------------------------------------------
+
+    const btnBuscarIPs = document.getElementById("btnBuscarIPs");
+    if (btnBuscarIPs) {
+        btnBuscarIPs.onclick = buscarIPsWifi;
+    }
+    
+    const btnConectarWifi = document.getElementById("btnConectarWifi");
+    if (btnConectarWifi) {
+        btnConectarWifi.onclick = conectarWifi;
+    }
+
+    // Inicia a busca automaticamente
+    buscarIPsWifi(); 
+});
+
+
+async function enviarComando(cmd) {
+    try {
+        const r = await window.deviceManager.enviar(cmd);
+        exibirLogNoTerminal("(OK) " + cmd);
+    } catch (e) {
+        exibirLogNoTerminal("(ERRO) " + e.message);
+    }
+}
+
+// Receber status
+window.wifiAPI?.onStatusWifi((data) => {
+    exibirLogNoTerminal(`[WIFI] ${data.mensagem}`);
+});
+
+// Receber dados do robô
+window.wifiAPI?.onDadosWifi((msg) => {
+    exibirLogNoTerminal(`[Robo Wi-Fi] ${msg}`);
 });

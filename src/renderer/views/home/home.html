@@ -147,24 +147,18 @@
                     </div>
                 </div>
 
-                <!-- Wifi -->
-                <div id="connectWifi">
-                    <div class="row g-2">
-                        <div class="col-12">
-                            <h6 class="text-muted">IP da Placa</h6>
-                        </div>
-                        <div class="col-6">
-                            <input type="text" id="ipRobo" class="form-control" placeholder="ex: 192.168.1.123">
-                        </div>
-                        <div class="col-6">
-                            <button class="btn btn-info w-100 mb-2" onclick="enviarComandoWifi()">Enviar Comando Wi-Fi</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bluetooth -->
-                <!-- <div id="connectBluetooth"></div> -->
-            </div>
+                <div class="input-group mb-3">
+    <button class="btn btn-info" id="btnBuscarIPs" title="Buscar dispositivos Wi-Fi disponíveis">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-wifi" viewBox="0 0 16 16">
+            <path d="M11.666 11.2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-1.833-2.4a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-1.833-2.4a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-1.833-2.4a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-1.833-2.4a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+        </svg>
+        Buscar IPs
+    </button>
+    <select class="form-select" id="selectIpRobo" disabled>
+        <option value="">Selecione o IP...</option>
+    </select>
+    <button class="btn btn-primary" id="btnConectarWifi" disabled>Conectar Wi-Fi</button>
+</div>
 
 
             <!-- Carrosel de Imagens -->
