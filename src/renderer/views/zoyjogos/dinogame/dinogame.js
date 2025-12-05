@@ -58,7 +58,7 @@ const config = {
         default: "arcade",
         arcade: { 
             // gravity: { y: 1500 }, // Gravidade para o jogo todo (desativada aqui, aplicada individualmente)
-            debug: true   // MUDANÇA: ATIVADO o debug para visualização das caixas de colisão
+            debug: false   // MUDANÇA: ATIVADO o debug para visualização das caixas de colisão
         } 
     },
     scene: { preload, create, update }
