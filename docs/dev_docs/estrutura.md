@@ -11,9 +11,12 @@ zoyblocks/
 │   └── ...
 │
 ├── python/                         # scripts auxiliares em Python
-│   ├── chatbot.py                  # script principal do chatbot
-│   ├── chatbot_fast.py
-│   └── precompute_embeddings.py
+│   │   ├── chatbot/                         # scripts auxiliares em Python
+│   │   │   ├── chatbot.py                  # script principal do chatbot
+│   │   │   ├──chatbot_fast.py
+│   │   │   └── precompute_embeddings.py
+│   │   └── zoy_vision/
+│   │   │   ├── vision.py     
 │
 ├── node_modules/                  # ambiente node
 |

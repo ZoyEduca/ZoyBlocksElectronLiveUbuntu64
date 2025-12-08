@@ -23,7 +23,6 @@ console.log("Ambiente atual:", process.env.NODE_ENV);
 console.log("-------------------------------------");
 
 let pythonProcess = null;
-let pythonVisionProcess = null;s
 
 // ------------------------------------------------------------
 // ----------- Janela principal -------------------------------
