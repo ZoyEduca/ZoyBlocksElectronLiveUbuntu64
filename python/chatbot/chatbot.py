@@ -9,13 +9,13 @@ from sentence_transformers import SentenceTransformer
 LOCAL_MODEL_NAME = "all-MiniLM-L6-v2"
 
 # 2. CALCULA O CAMINHO BASE (A RAIZ DO PROJETO)
-# current_dir é [RAIZ]/python. Subir dois '..' chega à [RAIZ]
+# current_dir é [RAIZ]/python/chatbot. Subir um '..' chega à [RAIZ]/python
 current_dir = os.path.dirname(os.path.abspath(__file__))
-BASE_PATH = os.path.abspath(os.path.join(current_dir, "..")) 
+BASE_PATHON = os.path.abspath(os.path.join(current_dir, "..")) 
 
 # 3. CONSTRÓI OS CAMINHOS ABSOLUTOS FINAIS
 # O modelo está em [RAIZ]/models/all-MiniLM-L6-v2
-MODEL_PATH = os.path.join(BASE_PATH, "models", LOCAL_MODEL_NAME)
+MODEL_PATH = os.path.join(BASE_PATHON, "models", LOCAL_MODEL_NAME)
 # O NPZ está na raiz do projeto: [RAIZ]/faq_embeddings.npz
 NPZ_PATH = os.path.join(current_dir, 'faq_embeddings.npz')
 

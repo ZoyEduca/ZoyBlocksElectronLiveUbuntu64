@@ -208,7 +208,7 @@ function getPythonPaths() {
     process.platform === "win32" ? "python.exe" : "python"
   );
 
-  const scriptPath = path.join(basePath, "python", "chatbot.py");
+  const scriptPath = path.join(basePath, "python", "chatbot", "chatbot.py");
 
   return { pythonPath, scriptPath };
 }

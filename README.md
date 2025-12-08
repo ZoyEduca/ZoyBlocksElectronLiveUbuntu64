@@ -116,7 +116,7 @@ pip install torch==2.2.1+cpu -f https://download.pytorch.org/whl/cpu/torch_stabl
 
 ### 6. Baixe o modelo all-MiniLM-L6-v2 com script_sentenceModels
 
-O **script_sentenceModels** cria a pasta models com o **all-MiniLM-L6-v2** que será utilizado pelo chatbot, esse script fica na raiz do projeto e basta utilizar o comando abaixo com o venv ativado
+O **script_sentenceModels** cria a pasta models com o **all-MiniLM-L6-v2** que será utilizado pelo chatbot, esse script fica em **raiz/python** do projeto e basta utilizar o comando abaixo com o venv ativado
 
 ``` bash
 python script_sentenceModels.py

@@ -3,12 +3,26 @@ import os
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-# Carrega manual
-manual_path = os.path.join(os.path.dirname(__file__), 'docs', 'manual.json')
+# Diretório atual do script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Caminho da raiz do projeto (sobe dois níveis: chatbot → python → raiz)
+BASE_PATH = os.path.abspath(os.path.join(current_dir, "..", ".."))
+
+# Caminho do manual na raiz/docs/
+manual_path = os.path.join(BASE_PATH, "docs", "manual.json")
+
+# Caminho do modelo local
+MODEL_PATH = os.path.join(BASE_PATH, "python", "models", "all-MiniLM-L6-v2")
+
+# Caminho onde o NPZ será salvo (na pasta chatbot)
+OUTPUT_NPZ = os.path.join(current_dir, "faq_embeddings.npz")
+
+# --- Carrega manual ---
 with open(manual_path, 'r', encoding='utf-8') as f:
     manual = json.load(f)
 
-# Coleta todo o conteúdo FAQ
+# --- Função para extrair perguntas e respostas ---
 def coletar_conteudo(obj):
     resultados = []
     for chave, valor in obj.items():
@@ -27,17 +41,17 @@ def coletar_conteudo(obj):
 conteudos = coletar_conteudo(manual)
 faq_items = [item for item in conteudos if 'pergunta' in item and 'resposta' in item]
 
-# Inicializa modelo
-model = SentenceTransformer('all-MiniLM-L6-v2')
+# --- Carrega modelo local ---
+model = SentenceTransformer(MODEL_PATH)
 
-# Calcula embeddings das perguntas
+# --- Calcula embeddings das perguntas ---
 embeddings = [model.encode(item['pergunta']).tolist() for item in faq_items]
 
-# Salva embeddings e respostas
+# --- Salva o arquivo ---
 np.savez_compressed(
-    os.path.join(os.path.dirname(__file__), 'faq_embeddings.npz'),
+    OUTPUT_NPZ,
     embeddings=embeddings,
     respostas=[item['resposta'] for item in faq_items]
 )
 
-print("Embeddings pré-calculados salvos com sucesso!")
+print(f"Embeddings pré-calculados salvos com sucesso em: {OUTPUT_NPZ}")
