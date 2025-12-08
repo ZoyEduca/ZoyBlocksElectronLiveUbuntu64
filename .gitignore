@@ -132,7 +132,6 @@ vite.config.ts.timestamp-*
 /venv/
 /__pycache__/
 *.pyc
-*.spec
 
 # Diretório de projetos salvos (se for temporário/local)
 /saved_projects
@@ -158,3 +157,6 @@ models/
 # Pasta do Arduino CLI (cache de cores e logs)
 /.arduino15/
 
+# Ignorar arquivos de build do zoy_vision
+**/zoy_vision/build/
+**/zoy_vision/dist/

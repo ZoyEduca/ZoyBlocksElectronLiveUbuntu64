@@ -9,6 +9,7 @@ torch==2.4.1+cpu --index-url https://download.pytorch.org/whl/cpu
 sentence-transformers==5.1.0
 
 # Dependências auxiliares (geralmente requeridas)
+pyinstaller>=6.17.0
 numpy>=1.26.0
 scikit-learn>=1.4.0
 scipy>=1.11.0

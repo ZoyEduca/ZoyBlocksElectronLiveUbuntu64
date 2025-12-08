@@ -993,18 +993,18 @@ window.addEventListener("DOMContentLoaded", async () => {
   // --- LISTENERS E INICIALIZAÇÃO DA NOVA INTERFACE WIFI
   // -----------------------------------------------------
 
-    const btnBuscarIPs = document.getElementById("btnBuscarIPs");
-    if (btnBuscarIPs) {
-        btnBuscarIPs.onclick = buscarIPsWifi;
-    }
-    
-    const btnConectarWifi = document.getElementById("btnConectarWifi");
-    if (btnConectarWifi) {
-        btnConectarWifi.onclick = conectarWifi;
-    }
+  // const btnBuscarIPs = document.getElementById("btnBuscarIPs");
+  // if (btnBuscarIPs) {
+  //     btnBuscarIPs.onclick = buscarIPsWifi;
+  // }
+  
+  // const btnConectarWifi = document.getElementById("btnConectarWifi");
+  // if (btnConectarWifi) {
+  //     btnConectarWifi.onclick = conectarWifi;
+  // }
 
-    // Inicia a busca automaticamente
-    buscarIPsWifi(); 
+  // // Inicia a busca automaticamente
+  // buscarIPsWifi(); 
 });
 
 
