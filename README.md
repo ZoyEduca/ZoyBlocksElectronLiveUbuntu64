@@ -31,7 +31,7 @@ npm install
 
 ### 3. Copiar pasta blockly para os arquivos de origem do nosso sistema
 
-Atualmente utilizamos o **blockly: v8.0.5** (ou use versão compatível).
+Atualmente utilizamos o **blockly: v12.3.1** (ou use versão compatível).
 instalamos essa versão que está anotada ao nosso package.json e copiamos ela para nossos arquivos de origem com o comando
 
 ``` bash
@@ -44,9 +44,20 @@ Obs: nosso gitignore vai ignorar a pasta blockly para o repositorio, então é s
 
 ### 4. Crie o arquivo .env
 
-Crie um arquivo com nome **.env** e copie o conteudo do arquivo **.env_exemple** nesse novo arquivo **.env** 
+Crie um arquivo com nome **.env** e copie o conteudo do arquivo **.env_exemple** nesse novo arquivo **.env**
 
-### 5. Criar e ativar ambiente virtual (Venv) para o chatbot
+para modo desenvolvimento use:
+``` bash
+NODE_ENV=development
+#NODE_ENV=production
+```
+para modo produção use:
+``` bash
+#NODE_ENV=development
+NODE_ENV=production
+```
+
+### 5. Criar e ativar ambiente virtual (Venv) para o chatbot e visão computacional
 
 O chatbot requer **Python 3.11.9** (ou versão compatível).\
 Verifique a versão instalada:
@@ -103,7 +114,15 @@ pip install -r requirements.txt
 pip install torch==2.2.1+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
 ```
 
-### 6. Executar o projeto
+### 6. Baixe o modelo all-MiniLM-L6-v2 com script_sentenceModels
+
+O **script_sentenceModels** cria a pasta models com o **all-MiniLM-L6-v2** que será utilizado pelo chatbot, esse script fica na raiz do projeto e basta utilizar o comando abaixo com o venv ativado
+
+``` bash
+python script_sentenceModels.py
+```
+
+### 7. Executar o projeto
 
 Para iniciar a aplicação Electron:
 

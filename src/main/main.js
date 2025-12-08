@@ -2,6 +2,10 @@
 const serialService = require("../main/services/serial-services");
 const blocklyService = require("../main/services/blockly-service");
 
+const wifi = require("./services/wifi-services");
+
+const dm = require("./services/device-manager");
+
 const {
   app,
   BrowserWindow,
@@ -80,7 +84,17 @@ const createWindow = () => {
 };
 
 
+ipcMain.handle("wifi:conectar", async (e, ip) => {
+    return wifi.conectarWifi(ip);
+});
 
+ipcMain.handle("wifi:enviar", async (e, cmd) => {
+    return wifi.enviarComandoWifi(cmd);
+});
+
+ipcMain.handle("wifi:desconectar", async () => {
+    return wifi.desconectarWifi();
+});
 
 // ----------------------------------------------------------------------------
 // ----------- Handlers do IPC para iniciar os processos do chatbot -----------
@@ -191,21 +205,48 @@ function startPythonProcess() {
 
   pythonProcess = spawn(pythonPath, [scriptPath], {
     cwd: path.dirname(scriptPath),
-    stdio: ["pipe", "pipe", "pipe"],
+    stdio: ["pipe", "pipe", "pipe"], // stdin, stdout, stderr
   });
 
-  pythonProcess.stderr.setEncoding("utf8");
   pythonProcess.stdout.setEncoding("utf8");
+  pythonProcess.stderr.setEncoding("utf8");
 
-  pythonProcess.on("error", (err) =>
-    console.error("❌ Erro ao iniciar Python:", err)
-  );
-  pythonProcess.stderr.on("data", (d) =>
-    console.error("🐍 Python stderr:", d.toString())
-  );
-  pythonProcess.on("exit", (code) =>
-    console.log("🐍 Processo Python encerrado com código:", code)
-  );
+  // Erro ao iniciar o Python
+  pythonProcess.on("error", (err) => {
+    console.error("Erro ao iniciar Python:", err);
+  });
+
+  // Captura stdout → respostas e logs
+  pythonProcess.stdout.on("data", (data) => {
+    const text = data.toString().trim();
+
+    // Tenta identificar se é JSON válido (resposta do chatbot)
+    try {
+      const json = JSON.parse(text);
+
+      // Enviando resposta real
+      if (json.resposta !== undefined) {
+        console.log("Resposta Python:", json.resposta);
+
+        // Aqui você chama sua função de UI:
+        // updateChat(json.resposta);
+      }
+      return;
+    } catch {
+      // Não era JSON → apenas log normal
+      console.log("Python log:", text);
+    }
+  });
+
+  // Captura stderr → apenas erros
+  pythonProcess.stderr.on("data", (d) => {
+    console.error("Python ERRO:", d.toString().trim());
+  });
+
+  // Aviso quando Python fecha
+  pythonProcess.on("exit", (code) => {
+    console.log("Processo Python encerrado com código:", code);
+  });
 }
 
 
@@ -262,6 +303,12 @@ ipcMain.handle("enviar-comando-serial", (event, comando) =>
 );
 
 
+
+ipcMain.handle("dm:conectarUSB",  (e, porta) => dm.conectarUSB(porta));
+ipcMain.handle("dm:conectarWifi", (e, ip)    => dm.conectarWifi(ip));
+ipcMain.handle("dm:enviar",       (e, cmd)   => dm.enviar(cmd));
+ipcMain.handle("dm:desconectar",  () => dm.desconectar());
+ipcMain.handle("dm:status",       () => dm.getStatus());
 
 
 
