@@ -308,7 +308,7 @@ function getVisionPaths() {
   if (app.isPackaged) {
     // 🚀 PRODUÇÃO: Executável compilado pelo PyInstaller (dentro da pasta dist/vision/)
     // Caminho: resources/python/zoy_vision/dist/vision/vision.exe
-    const distPath = path.join(basePath, "python", "zoy_vision", "dist", "vision");
+    const distPath = path.join(basePath, "python", "zoy_vision");
     
     if (process.platform === "win32") {
       execPath = path.join(distPath, "vision.exe");

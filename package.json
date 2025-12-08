@@ -55,7 +55,7 @@
       },
       {
         "from": "python/zoy_vision/dist/vision/",
-        "to": "python/vision",
+        "to": "python/zoy_vision",
         "filter": ["**/*"]
       },
       {
