@@ -2,7 +2,7 @@ import sys
 import os
 import json
 import numpy as np
-# 🌟 Importações Corretas para modelos de Embedding (Sentence Transformer)
+# Importações Corretas para modelos de Embedding (Sentence Transformer)
 from sentence_transformers import SentenceTransformer
 
 # 1. Defina o nome da pasta do modelo
@@ -37,13 +37,15 @@ def main():
         data = np.load(NPZ_PATH, allow_pickle=True)
         faq_embeddings = np.array(data['embeddings'])
         faq_respostas = data['respostas']
-        print(f"✅ Embeddings FAQ carregados com sucesso de: {NPZ_PATH}", file=sys.stderr)
+        # ✔ log normal → stdout
+        print(f"Embeddings FAQ carregados com sucesso de: {NPZ_PATH}")
     except FileNotFoundError:
-        print(f"❌ ERRO CRÍTICO: Arquivo faq_embeddings.npz não encontrado em: {NPZ_PATH}", file=sys.stderr)
+        # erro mesmo → stderr
+        print(f"ERRO CRÍTICO: Arquivo faq_embeddings.npz não encontrado em: {NPZ_PATH}", file=sys.stderr)
         print("Você precisa executar um script para gerar os embeddings FAQ antes de usar o chatbot.", file=sys.stderr)
         sys.exit(1) # Sai com erro
     except Exception as e:
-        print(f"❌ ERRO CRÍTICO: Erro ao carregar faq_embeddings.npz: {e}", file=sys.stderr)
+        print(f"ERRO CRÍTICO: Erro ao carregar faq_embeddings.npz: {e}", file=sys.stderr)
         sys.exit(1)
 
 
@@ -52,15 +54,16 @@ def main():
     # ----------------------------------------------------
     try:
         if not os.path.exists(MODEL_PATH) or not os.listdir(MODEL_PATH):
-            print(f"❌ ERRO CRÍTICO: Pasta do modelo LLM vazia ou não encontrada em: {MODEL_PATH}", file=sys.stderr)
+            print(f"ERRO CRÍTICO: Pasta do modelo LLM vazia ou não encontrada em: {MODEL_PATH}", file=sys.stderr)
             print("Execute 'python download_model.py' ou verifique o caminho e conteúdo da pasta 'models'.", file=sys.stderr)
             sys.exit(1)
 
-        # 🌟 Carrega o modelo SentenceTransformer da pasta local
+        # Carrega o modelo SentenceTransformer da pasta local
         model = SentenceTransformer(MODEL_PATH) 
-        print(f"✅ Modelo SentenceTransformer carregado com sucesso de: {MODEL_PATH}", file=sys.stderr)
+        # ✔ log normal → stdout
+        print(f"Modelo SentenceTransformer carregado com sucesso de: {MODEL_PATH}")
     except Exception as e:
-        print(f"❌ ERRO CRÍTICO: Erro ao carregar o modelo de: {MODEL_PATH} -> {e}", file=sys.stderr)
+        print(f"ERRO CRÍTICO: Erro ao carregar o modelo de: {MODEL_PATH} -> {e}", file=sys.stderr)
         print(f"Verifique se a pasta '{LOCAL_MODEL_NAME}' está completa e se as bibliotecas (torch, transformers, etc.) estão instaladas.", file=sys.stderr)
         sys.exit(1) # Sai com erro
 
@@ -88,7 +91,9 @@ def main():
     # ----------------------------------------------------
     # 4. Loop Principal de Comunicação
     # ----------------------------------------------------
-    print("Pronto para receber perguntas do Node/Electron...", file=sys.stderr)
+    # ✔ log normal → stdout
+    print("Pronto para receber perguntas do Node/Electron...")
+
     for line in sys.stdin:
         try:
             input_data = json.loads(line)
