@@ -16,7 +16,9 @@ zoyblocks/
 │   │   │   ├──chatbot_fast.py
 │   │   │   └── precompute_embeddings.py
 │   │   └── zoy_vision/
+│   │   │   ├── dist/  
 │   │   │   ├── vision.py     
+│   │   │   ├── vision.spec    
 │
 ├── node_modules/                  # ambiente node
 |

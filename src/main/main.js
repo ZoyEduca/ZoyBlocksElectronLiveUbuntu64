@@ -22,7 +22,8 @@ console.log("-------------------------------------");
 console.log("Ambiente atual:", process.env.NODE_ENV);
 console.log("-------------------------------------");
 
-let pythonProcess = null;
+let pythonProcess = null; //processo do chatbot Python
+let visionProcess = null; //processo do Zoy Vision Python
 
 // ------------------------------------------------------------
 // ----------- Janela principal -------------------------------
@@ -279,6 +280,109 @@ function startPythonProcess() {
 }
 
 
+// ----------------------------------------------------------------------------
+// ----------- Handler do IPC para Zoy Vision ---------------------------------
+// ----------------------------------------------------------------------------
+ipcMain.handle("abrir-zoy-vision", () => {
+  // 1. Inicia o Python
+  startVisionProcess();
+
+  // 2. Retorna sucesso imediato (a UI lida com erros via logs)
+  return { status: true, msg: "Zoy Vision Iniciado" };
+});
+
+// ------------------------------------------------------------
+// 🐍 CONTROLE DO PROCESSO ZOY VISION
+// ------------------------------------------------------------
+// Função para gerar os caminhos dinâmicos do Zoy Vision
+function getVisionPaths() {
+  const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
+  
+  // Caminho do Python (usa o mesmo venv do chatbot ou o sistema em dev)
+  // Nota: Em modo empacotado, o Vision tem seu próprio executável, então o pythonPath muda.
+  
+  let execPath;
+  let args = [];
+  let cwd;
+
+  if (app.isPackaged) {
+    // 🚀 PRODUÇÃO: Executável compilado pelo PyInstaller (dentro da pasta dist/vision/)
+    // Caminho: resources/python/zoy_vision/dist/vision/vision.exe
+    const distPath = path.join(basePath, "python", "zoy_vision", "dist", "vision");
+    
+    if (process.platform === "win32") {
+      execPath = path.join(distPath, "vision.exe");
+    } else {
+      execPath = path.join(distPath, "vision");
+    }
+    cwd = distPath;
+    
+  } else {
+    // 🧪 DESENVOLVIMENTO: Roda o script .py usando o Python do venv
+    const pythonExecutable = process.platform === "win32" ? "python.exe" : "python";
+    execPath = path.join(basePath, "venv", process.platform === "win32" ? "Scripts" : "bin", pythonExecutable);
+    
+    const scriptPath = path.join(basePath, "python", "zoy_vision", "vision.py");
+    args = [scriptPath];
+    cwd = path.dirname(scriptPath);
+  }
+
+  return { execPath, args, cwd };
+}
+
+// Inicia o processo do Zoy Vision
+function startVisionProcess() {
+  if (visionProcess && !visionProcess.killed) {
+    console.log("Zoy Vision já está rodando.");
+    return;
+  }
+
+  const { execPath, args, cwd } = getVisionPaths();
+  console.log(`[VISION] Iniciando: ${execPath} com args: ${args}`);
+
+  visionProcess = spawn(execPath, args, {
+    cwd: cwd,
+    stdio: ["pipe", "pipe", "pipe"], // Importante para capturar o SERIAL_CMD
+  });
+
+  visionProcess.stdout.setEncoding("utf8");
+  visionProcess.stderr.setEncoding("utf8");
+
+  // --- ESCUTANDO COMANDOS DO PYTHON ---
+  visionProcess.stdout.on("data", (data) => {
+    const lines = data.toString().split("\n");
+    
+    lines.forEach(line => {
+      const text = line.trim();
+      if (!text) return;
+
+      console.log(`[VISION LOG]: ${text}`);
+
+      // Se o Python mandar "SERIAL_CMD:<comando>", enviamos para o Arduino
+      if (text.startsWith("SERIAL_CMD:")) {
+        const comandoSerial = text.replace("SERIAL_CMD:", "");
+        console.log(`[VISION -> SERIAL]: Enviando ${comandoSerial}`);
+        
+        // Chama o serviço de serial existente
+        serialService.enviarComandoSerial(comandoSerial)
+          .catch(err => console.error(`[VISION SERIAL ERRO]: ${err.message}`));
+      }
+    });
+  });
+
+  visionProcess.stderr.on("data", (data) => {
+    console.error(`[VISION ERR]: ${data}`);
+  });
+
+  visionProcess.on("close", (code) => {
+    console.log(`[VISION] Processo encerrado com código: ${code}`);
+    visionProcess = null;
+  });
+  
+  visionProcess.on("error", (err) => {
+      console.error("[VISION FATAL]", err);
+  });
+}
 
 
 // ----------------------------------------------------------------------------
@@ -553,7 +657,17 @@ async function finalizarTudo() {
         console.error("[ERRO] Ao encerrar pythonProcess:", err.message);
     }
 
-    // 2) Desconecta a serial corretamente
+    // 2) Finaliza o Python Vision (ADICIONE ISSO)
+    try {
+        if (visionProcess && !visionProcess.killed) {
+            console.log("[ENCERRAR] Encerrando Zoy Vision...");
+            visionProcess.kill("SIGKILL");
+        }
+    } catch (err) {
+        console.error("[ERRO] Ao encerrar visionProcess:", err.message);
+    }
+
+    // 3) Desconecta a serial corretamente
     try {
         console.log("[ENCERRAR] Fechando porta serial...");
         await serialService.desconectarPorta();
@@ -561,7 +675,7 @@ async function finalizarTudo() {
         console.error("[ERRO] Ao encerrar porta serial:", err.message);
     }
 
-    // 3) Limpa timers, sandbox, fila ou serviços adicionais
+    // 4) Limpa timers, sandbox, fila ou serviços adicionais
     try {
         if (blocklyService?.finalizar) {
             console.log("[ENCERRAR] Finalizando serviço Blockly...");
