@@ -3,7 +3,6 @@ const serialService = require("../main/services/serial-services");
 const blocklyService = require("../main/services/blockly-service");
 
 const wifi = require("./services/wifi-services");
-
 const dm = require("./services/device-manager");
 
 const {
@@ -24,6 +23,7 @@ console.log("Ambiente atual:", process.env.NODE_ENV);
 console.log("-------------------------------------");
 
 let pythonProcess = null;
+let pythonVisionProcess = null;s
 
 // ------------------------------------------------------------
 // ----------- Janela principal -------------------------------
@@ -130,7 +130,20 @@ ipcMain.handle("abrir-zoygpt", () => {
   } else {
     gptWindow.webContents.closeDevTools();
   }
+
+  // Quando fechar a janela → encerra o Python
+  gptWindow.on("closed", () => {
+    if (pythonProcess && !pythonProcess.killed) {
+      try {
+        pythonProcess.kill("SIGTERM");
+        console.log("Processo Python encerrado ao fechar janela GPT");
+      } catch (e) {
+        console.error("Erro ao encerrar o Python:", e);
+      }
+    }
+  });
 });
+
 
 // Handler de pergunta ao chatbot
 ipcMain.handle("perguntar", async (event, pergunta) => {
@@ -192,7 +205,10 @@ ipcMain.handle("log-conversation", async (event, pergunta, resposta) => {
   }
 });
 
-// -------------------------- Funções Utilitárias ------------------------------
+/* =============================================================
+   🐍 CONTROLE DO PROCESSO PYTHON
+============================================================= */
+
 /**
  * Retorna o caminho do interpretador Python e do script chatbot.py
  * ajustando conforme ambiente (dev x produção).
@@ -470,8 +486,6 @@ function isSafeUrl(url) {
 }
 
 
-
-
 // -------------------------------------------------------------
 // ----------- Lógica de inicialização do aplicativo -----------
 // -------------------------------------------------------------
@@ -493,14 +507,6 @@ app.whenReady().then(() => {
   }
 });
 
-// Sai quando todas as janelas são fechadas, exceto no macOS. Lá, é comum
-// que os aplicativos e sua barra de menu permaneçam ativos até que o usuário saia
-// explicitamente com Cmd + Q.
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
 
 // ----------------------------------------------------
 // ----------- Funções de configurações Globais -------
@@ -515,10 +521,92 @@ function disableDevToolsShortcuts() {
   globalShortcut.register("Cmd+Opt+J", () => {}); // macOS
   globalShortcut.register("Ctrl+Alt+I", () => {});
   globalShortcut.register("Cmd+Alt+I", () => {}); // macOS
-
+  
   // Desabilita atalhos adicionais
   globalShortcut.register("Ctrl+Shift+U", () => {});
   globalShortcut.register("Ctrl+Shift+P", () => {});
   globalShortcut.register("Ctrl+Shift+F", () => {});
   globalShortcut.register("F1", () => {});
 }
+
+// ========================================================================
+// Eventos de encerramento — evita múltiplos handlers e garante finalização
+// ========================================================================
+
+let encerrando = false;
+
+async function encerrarUnico() {
+    if (encerrando) return;
+    encerrando = true;
+    await finalizarTudo();
+}
+
+async function finalizarTudo() {
+    console.log("\n=== ENCERRANDO SISTEMA ===");
+
+    // 1) Finaliza o Python, caso exista
+    try {
+        if (pythonProcess && !pythonProcess.killed) {
+            console.log("[ENCERRAR] Encerrando Python...");
+            pythonProcess.kill("SIGKILL");
+        }
+    } catch (err) {
+        console.error("[ERRO] Ao encerrar pythonProcess:", err.message);
+    }
+
+    // 2) Desconecta a serial corretamente
+    try {
+        console.log("[ENCERRAR] Fechando porta serial...");
+        await serialService.desconectarPorta();
+    } catch (err) {
+        console.error("[ERRO] Ao encerrar porta serial:", err.message);
+    }
+
+    // 3) Limpa timers, sandbox, fila ou serviços adicionais
+    try {
+        if (blocklyService?.finalizar) {
+            console.log("[ENCERRAR] Finalizando serviço Blockly...");
+            blocklyService.finalizar();
+        }
+    } catch (err) {
+        console.error("[ERRO] Ao finalizar serviço Blockly:", err.message);
+    }
+
+    console.log("[OK] Encerramento completo.");
+    process.exit(0);
+}
+
+// Sai quando todas as janelas são fechadas, exceto no macOS. Lá, é comum
+// que os aplicativos e sua barra de menu permaneçam ativos até que o usuário saia
+// explicitamente com Cmd + Q.
+app.on("window-all-closed", async () => {
+  console.log("[EVENT] window-all-closed");
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
+});
+
+// CTRL + C no terminal
+process.on("SIGINT", async () => {
+    console.log("[EVENT] SIGINT");
+    await encerrarUnico();
+});
+
+// Encerramento normal
+app.on("before-quit", async (e) => {
+    console.log("[EVENT] before-quit");
+    e.preventDefault();
+    await encerrarUnico();
+});
+
+// Sinais do SO
+process.on("SIGTERM", async () => {
+    console.log("[EVENT] SIGTERM");
+    await encerrarUnico();
+});
+
+// Segurança extra para exceptions não tratadas
+process.on("uncaughtException", async (err) => {
+    console.error("[ERRO FATAL]", err);
+    await encerrarUnico();
+});

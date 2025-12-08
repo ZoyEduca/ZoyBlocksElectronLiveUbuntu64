@@ -525,6 +525,11 @@ document.getElementById("abrirZoyGPTBtn").addEventListener("click", () => {
   window.electronAPI.abrirZoyGPT();
 });
 
+// ZoyVision
+document.getElementById("btnZoyVision").addEventListener("click", () => {
+  window.electronAPI.abrirZoyVision();
+});
+
 // ZoyGames
 document.getElementById("btnZoyGames").addEventListener("click", () => {
   window.electronAPI.abrirZoyGames();

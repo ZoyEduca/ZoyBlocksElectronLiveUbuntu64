@@ -57,6 +57,7 @@ contextBridge.exposeInMainWorld("paths", {
 contextBridge.exposeInMainWorld("electronAPI", {
   // Função para abrir janelas
   abrirZoyGPT: () => ipcRenderer.invoke("abrir-zoygpt"),
+  abrirZoyVision: () => ipcRenderer.invoke("abrir-zoy-vision"),
   abrirTerminalCompleto: () => ipcRenderer.invoke("abrir-terminal-completo"),
   abrirZoyGames: () => ipcRenderer.invoke("abrir-zoygames"),
   abrirBlocklyGames: () => ipcRenderer.invoke("abrir-blocklygames"),
