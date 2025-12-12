@@ -4,7 +4,7 @@
  *                     : Lourenço, Moises
  *                     : Correia, Felipe
  * Updated             : Correia, Felipe
- * Version             : v0.8.1 (Implementação Serial_print)
+ * Version             : v0.8.2 (Implementação Serial_print)
  * Date                : 11/11/2025
  * Description         : Firmware desenvolvido exclusivamente para o robô educacional Zoy STEAM
  * MODIFICADO para comunicação Assíncrona e Não-Bloqueante
@@ -941,7 +941,7 @@ void processarComando(String cmd)
 
   // === Comando ZOY de firmware ===
   if (comando_temp == "ZOY" && argumentos_temp == "ZOY") {
-    Serial.println("FIRMWARE:ZOY_STEAM:v0.8.1"); // Versão atualizada
+    Serial.println("FIRMWARE:ZOY_STEAM:v0.8.2"); // Versão atualizada
     return;
   }
   
