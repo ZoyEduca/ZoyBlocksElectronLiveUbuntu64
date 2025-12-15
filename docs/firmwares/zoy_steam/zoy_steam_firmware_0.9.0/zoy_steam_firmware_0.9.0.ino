@@ -4,10 +4,10 @@
  *                     : Lourenço, Moises
  *                     : Correia, Felipe
  * Updated             : Correia, Felipe
- * Version             : v0.8.2 (Implementação Serial_print)
- * Date                : 11/11/2025
+ * Version             : v0.9.0 
+ * Date                : 15/12/2025
  * Description         : Firmware desenvolvido exclusivamente para o robô educacional Zoy STEAM
- * MODIFICADO para comunicação Assíncrona e Não-Bloqueante
+ * MODIFICADO          : Otimização com bibliotecas de Servo.h e Ultrasonic
  * License             : Licença Pública Geral Menor GNU(LGPL)
  * Copyright (C) 2025 Zoy Educa. All right reserved.
  * http://www.zoy.com.br/
@@ -15,11 +15,13 @@
 #include <Arduino.h>
 #include <Wire.h> // I2C além dos pinos 0 e 1
 #include <SoftwareSerial.h>
+#include <Servo.h>
+#include <Ultrasonic.h>
 
-int tempo = 20; // Variável de tempo mantida, mas usada para servoTempoEntrePassos
-
+// ==== CONFIGURAÇÕES GERAIS ====
 const int LED_LEFT = 15;
 const int LED_RIGHT = 16;
+const int LED_13 = 13;
 
 const int MOTOR_E1 = 3;
 const int MOTOR_E2 = 5;
@@ -27,7 +29,10 @@ const int MOTOR_D1 = 6;
 const int MOTOR_D2 = 11;
 
 const int BUZZER = 12; // Opcional, se quiser BEEP
-const int LED_13 = 13;
+
+const int ZOY_MAX_SERVOS = 6;   // Quantidade máxima de servos simultâneos
+
+// ==== ESTRUTURAS DE CONTROLE ====
 
 // Controle assíncrono do LED_LEFT
 bool piscaLeftAtivo = false;
@@ -50,87 +55,46 @@ unsigned long tempoAnterior13 = 0;
 bool estadoLed13 = LOW;
 const unsigned long intervaloLed13 = 300;
 
-// --- Variáveis para controle de debounce de um botão (assíncrono) ---
-int botao_zoy_debounce;
-int button_zoy_State; // Estado atual (HIGH = solto, LOW = pressionado)
-int lastButton_zoy_State = HIGH;
-unsigned long lastDebounceTime = 0;
-const unsigned long debounceDelay = 50;
-bool debounceActive = false;
+// Estrutura para gerenciar Servos (360 e Angulares)
+struct ZoyServo {
+ Servo objetoServo;
+ int pino = -1;    // -1 indica slot livre
+ bool ativo = false;
+};
 
-// ==== VARIÁVEIS GLOBAIS PARA CONTROLE DE FLUXO E TEMPO NÃO-BLOQUEANTE ====
-unsigned long tempoFimPausa = 0;
+ZoyServo listaServos[ZOY_MAX_SERVOS]; // Array para gerenciar múltiplos servos
+
+// Variáveis para Movimento Progressivo da Garra (A e C)
+// Nota: Usaremos um "Slot Reservado" ou lógica dedicada para a animação da garra
+int garraPino = -1;
+int garraAnguloAtual = -1;
+int garraAnguloAlvo = -1;
+unsigned long garraUltimoMovimento = 0;
+const int garraTempoPasso = 20; // Velocidade da animação (ms)
+const int garraPassoGraus = 5; // Suavidade
+
+// Variáveis Globais de Fluxo
+String buffer = "";
 bool pausaAtiva = false; // TRUE se AGUARDA/PAUSA foi ativado
+unsigned long tempoFimPausa = 0;
 
-// Variáveis para Movimento Progressivo do Servo (A/C)
-int servoTargetAngle = -1; // -1: Inativo, 0-175: Ângulo Final
-int servoCurrentAngle = -1; // Ângulo atual do movimento progressivo
-unsigned long servoLastMoveTime = 0;
-const int servoTempoEntrePassos = 20; // 20ms (usa o 'tempo' original)
-const int servoPasso = 10; // 10 graus por passo
-// ==============================================================================
-
-int servo360Pin = -1; // Pino do servo
-int pulsoServo360 = 1500; // Pulso atual (1500 = parado)
-String buffer = ""; 
-
-// Protótipo da função processarComando, pois é chamada antes de ser definida
+// Protótipos, devem ser chamados antes de ser definido
 void processarComando(String cmd);
+ZoyServo* obterServo(int pino);
+void desanexarServo(int pino); // Adicionei para consistência
 
-// --- Função para ler o estado de um botão com debounce (assíncrono) ---
-int debouncedButtonRead(int buttonPin)
-{
-  int reading = digitalRead(buttonPin); // Leitura bruta do pino
+// === LEITURA ULTRASSOM (Ultrasonic) ===
+float ler_ultrassom(int trigPin, int echoPin) {
+ // Instancia localmente para permitir pinos dinâmicos
+ Ultrasonic sonar(trigPin, echoPin);
 
-  if (reading != lastButton_zoy_State)
-  {
-    lastDebounceTime = millis();
-  }
+ // read() retorna a distância em centímetros (cm). Pode retornar 0 se muito perto ou erro.
+ long distancia_cm = sonar.read(CM); // Ultrasonic retorna long no .read()
 
-  if ((millis() - lastDebounceTime) > debounceDelay)
-  {
-    if (reading != button_zoy_State)
-    {
-      button_zoy_State = reading; // O botão mudou de estado estável
-    }
-  }
-
-  lastButton_zoy_State = reading; // Guarda a última leitura bruta
-  return button_zoy_State;        // Retorna o estado estável do botão
-}
-
-// === Função de leitura do Ultrassom (retorna float para maior precisão) ===
-float ler_ultrassom(int trigPin, int echoPin)
-{
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-
-  unsigned long duracao = pulseIn(echoPin, HIGH);
-  float distancia_cm = duracao / 29.6 / 2.0;
-
-  return distancia_cm;
-}
-
-// === Função do Servo Motor ===
-void moverServo(int pino, int angulo)
-{                                        
-  float pausa;                                         
-  pausa = angulo * 2000.0 / 180.0 + 700; // Calculamos a largura da pulsação
-  // O loop interno é mantido, pois é o SoftPWM necessário para gerar o pulso do servo
-  for (int i = 0; i < 10; i += 2)        // envia ~10 pulsos
-  {                                     
-    digitalWrite(pino, HIGH);          
-    delayMicroseconds(pausa);          
-    digitalWrite(pino, LOW);           
-    delayMicroseconds(25000 - pausa); 
-  }
+ // Se a distância for 0, geralmente indica fora de alcance ou erro.
+ // Poderíamos tratar como 0 ou um valor máximo, como 400cm, dependendo da necessidade.
+ // Aqui, retornamos a leitura como float
+ return (float)distancia_cm;
 }
 
 void setup()
@@ -145,6 +109,45 @@ void setup()
   pinMode(MOTOR_D2, OUTPUT);
   pinMode(LED_13, OUTPUT);
   pinMode(BUZZER, OUTPUT);
+
+  // Sinal para reconhecer firmware instalado
+  Serial.println("ZOY_FIRMWARE_V0.9.0"); // Versão atualizada
+  // Sinal com 3 piscadas rápidas e 2 piscadas lentas e movimentos leves com motores
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(LED_13, HIGH);
+    digitalWrite(LED_LEFT, HIGH);
+    digitalWrite(LED_RIGHT, HIGH);
+    digitalWrite(MOTOR_E1, LOW);
+    analogWrite(MOTOR_E2, 100);
+    analogWrite(MOTOR_D1, 100);
+    digitalWrite(MOTOR_D2, LOW);
+    delay(100);
+    
+    digitalWrite(LED_13, LOW);
+    digitalWrite(LED_LEFT, LOW);
+    digitalWrite(LED_RIGHT, LOW);
+    analogWrite(MOTOR_E1, 100);
+    digitalWrite(MOTOR_E2, LOW);
+    digitalWrite(MOTOR_D1, LOW);
+    analogWrite(MOTOR_D2, 100);
+    delay(100);
+  }
+  // Garante Motores estejam desligados no início
+  digitalWrite(MOTOR_E1, LOW);
+  digitalWrite(MOTOR_E2, LOW);
+  digitalWrite(MOTOR_D1, LOW);
+  digitalWrite(MOTOR_D2, LOW);
+  
+  for (int i = 0; i < 2; i++) {
+    digitalWrite(LED_13, HIGH);
+    digitalWrite(LED_LEFT, HIGH);
+    digitalWrite(LED_RIGHT, HIGH);
+    delay(500);
+    digitalWrite(LED_13, LOW);
+    digitalWrite(LED_LEFT, LOW);
+    digitalWrite(LED_RIGHT, LOW);
+    delay(500);
+  }
 
   // Garante que os LEDs estejam desligados no início
   digitalWrite(LED_LEFT, LOW);
@@ -161,30 +164,35 @@ void loop()
       Serial.println("PAUSA_FIM"); // AVISO CRÍTICO PARA O NODE.JS (ACK de tempo)
     }
   }
-
-  // 2. === GERENCIADOR DE MOVIMENTO DE SERVO PROGRESSIVO (A e C) ===
-  if (servo360Pin != -1 && servoTargetAngle != -1 && servoCurrentAngle != servoTargetAngle) {
-      if (millis() - servoLastMoveTime >= servoTempoEntrePassos) {
-          servoLastMoveTime = millis();
-          
-          // Movimenta em direção ao target
-          if (servoCurrentAngle < servoTargetAngle) {
-              servoCurrentAngle += servoPasso;
-              if (servoCurrentAngle > servoTargetAngle) servoCurrentAngle = servoTargetAngle;
-          } else {
-              servoCurrentAngle -= servoPasso;
-              if (servoCurrentAngle < servoTargetAngle) servoCurrentAngle = servoTargetAngle;
-          }
-          
-          moverServo(servo360Pin, servoCurrentAngle);
-          
-          // Verifica a conclusão
-          if (servoCurrentAngle == servoTargetAngle) {
-              servoTargetAngle = -1; // Movimento concluído
-              Serial.println("SERVO_FIM"); // AVISO CRÍTICO PARA O NODE.JS (ACK de movimento)
-          }
-      }
+  
+  // 2. === GERENCIADOR DE MOVIMENTO PROGRESSIVO DA GARRA (A/C) ===
+  if (garraPino != -1 && garraAnguloAlvo != -1 && garraAnguloAtual != garraAnguloAlvo) {
+    if (millis() - garraUltimoMovimento >= garraTempoPasso) {
+     garraUltimoMovimento = millis();
+  
+     // Cálculo do próximo passo
+     if (garraAnguloAtual < garraAnguloAlvo) {
+      garraAnguloAtual += garraPassoGraus;
+      if (garraAnguloAtual > garraAnguloAlvo) garraAnguloAtual = garraAnguloAlvo;
+     } else {
+      garraAnguloAtual -= garraPassoGraus;
+      if (garraAnguloAtual < garraAnguloAlvo) garraAnguloAtual = garraAnguloAlvo;
+     }
+  
+     // Move o servo físico
+     ZoyServo* s = obterServo(garraPino);
+     if (s) {
+      s->objetoServo.write(garraAnguloAtual);
+     }
+  
+     // Verifica fim do movimento
+     if (garraAnguloAtual == garraAnguloAlvo) {
+      garraAnguloAlvo = -1; // Movimento concluído (mantém posição)
+      Serial.println("SERVO_FIM"); // Aviso para o Node.js
+     }
+    }
   }
+
   
   // Lógica de leitura serial para comandos
   while (Serial.available())
@@ -204,12 +212,6 @@ void loop()
         buffer = "";              // Limpa o buffer para o próximo comando
       }
     }
-  }
-
-  // --- Controle Assíncrono do debounce
-  if (debounceActive)
-  {
-    debouncedButtonRead(botao_zoy_debounce);
   }
 
   // --- Controle Assíncrono dos LEDs (permanecem no loop, pois são baseados em millis()) ---
@@ -269,35 +271,57 @@ void loop()
       }
     }
   }
-    // Servo 360 Contínuo
-    if (servo360Pin != -1 && servoTargetAngle == -1) { // Só roda se não estiver em movimento progressivo
-    
-      digitalWrite(servo360Pin, HIGH);
-      delayMicroseconds(pulsoServo360);
-      digitalWrite(servo360Pin, LOW);
-      delayMicroseconds(20000 - pulsoServo360);
-    }
+}
+
+// === FUNÇÕES AUXILIARES DE SERVO ===
+// Busca um slot de servo já anexado ao pino ou aloca um novo
+ZoyServo* obterServo(int pino) {
+ // 1. Verifica se já existe esse pino configurado
+ for (int i = 0; i < ZOY_MAX_SERVOS; i++) {
+  if (listaServos[i].ativo && listaServos[i].pino == pino) {
+   return &listaServos[i];
+  }
+ }
+ // 2. Se não existe, pega o primeiro slot livre
+ for (int i = 0; i < ZOY_MAX_SERVOS; i++) {
+  if (!listaServos[i].ativo) {
+   listaServos[i].pino = pino;
+   listaServos[i].ativo = true;
+   listaServos[i].objetoServo.attach(pino);
+   return &listaServos[i];
+  }
+ }
+ return NULL; // Sem slots disponíveis (limite atingido)
+}
+
+// Remove o servo da lista (opcional, para liberar slots)
+void desanexarServo(int pino) {
+ for (int i = 0; i < ZOY_MAX_SERVOS; i++) {
+  if (listaServos[i].ativo && listaServos[i].pino == pino) {
+   listaServos[i].objetoServo.detach();
+   listaServos[i].ativo = false;
+   listaServos[i].pino = -1;
+  }
+ }
 }
 
 // === Função para mapear pino analógico ===
 int lerAnalogico(String pino)
 {
-  pino.trim();
-  if (pino == "A0")
-    return analogRead(A0);
-  if (pino == "A3")
-    return analogRead(A3);
-  if (pino == "A4")
-    return analogRead(A4);
-  if (pino == "A5")
-    return analogRead(A5);
-#if defined(__AVR_ATmega328P__) // Ex: Arduino Nano
-  if (pino == "A6")
-    return analogRead(A6);
-  if (pino == "A7")
-    return analogRead(A7);
-#endif
-  return -1; // pino inválido
+ pino.trim();    // remove espaços extras
+ pino.toUpperCase(); // // garante que "a0" funcione como "A0"
+
+ // Verifica se começa com 'A' e tem um número válido depois
+ if (!pino.startsWith("A"))
+  return -1;
+
+ int num = pino.substring(1).toInt(); // pega o número após 'A'
+
+ // Garante apenas os pinos alnalogicos do uno: [A0, A1, A2, A3, A4, A5, A6 e A7]
+ if (num < 0 || num > 7)
+  return -1;
+
+ return analogRead(A0 + num);
 }
 
 // === Função para processar comandos recebidos via Serial ===
@@ -365,7 +389,8 @@ void processarComando(String cmd)
     // Por enquanto, o Node.js deve assumir o tempo.
     return;
   }
-  // === NOVO: PAUSA (TEMPO) - AGORA NÃO-BLOQUEANTE ===
+  
+  // === PAUSA (TEMPO) - NÃO-BLOQUEANTE ===
   if (comando_temp == "PAUSA"){
     argumentos_temp.trim();
     unsigned long valorTempo = (unsigned long)argumentos_temp.toInt();
@@ -379,7 +404,7 @@ void processarComando(String cmd)
     return;
   }
 
-  // === NOVO: DIGITAL_WRITE (pinos digitais) ===
+  // === DIGITAL_WRITE (pinos digitais) ===
   if (comando_temp == "DIGITAL_WRITE") {
     int sep_arg = argumentos_temp.indexOf(',');
     if (sep_arg == -1)
@@ -430,7 +455,7 @@ void processarComando(String cmd)
     }
   }
 
-  // === NOVO: PWM_WRITE (pinos PWM) ===
+  // === PWM_WRITE (pinos PWM) ===
   if (comando_temp == "PWM_WRITE") {
    int sep_arg = argumentos_temp.indexOf(',');
     if (sep_arg == -1)
@@ -472,33 +497,21 @@ void processarComando(String cmd)
     return;
   }
 
-  // === LER SENSOR ULTRASSOM ===
-  if (comando_temp == "ULTRASSOM") {
-    int primeiro_virgula = argumentos_temp.indexOf(',');
-    if (primeiro_virgula != -1)
-    {
-      int trigPin = argumentos_temp.substring(0, primeiro_virgula).toInt();
-      int echoPin = argumentos_temp.substring(primeiro_virgula + 1).toInt();
-
-      // CORREÇÃO: 'arguments_temp' para 'argumentos_temp'
-      if (trigPin == 0 && argumentos_temp.substring(0, primeiro_virgula) != "0" ||
-          echoPin == 0 && argumentos_temp.substring(primeiro_virgula + 1) != "0")
-      {
-        Serial.println("ERRO:PINOS_ULTRASSOM_INVALIDOS");
-        return;
-      }
-
-      float distancia = ler_ultrassom(trigPin, echoPin);
-      Serial.print("DISTANCIA:");
-      Serial.println(distancia, 2); // Imprime a distância com 2 casas decimais
-      // REMOVIDO: Serial.println("OK"); para evitar linhas extras
+   // === LEITURA ULTRASSOM OTIMIZADA COM BIBLIOTECA ===
+   if (comando_temp == "ULTRASSOM") {
+    int sep = argumentos_temp.indexOf(',');
+    if (sep != -1) {
+     int trig = argumentos_temp.substring(0, sep).toInt();
+     int echo = argumentos_temp.substring(sep + 1).toInt();
+    
+     float dist = ler_ultrassom(trig, echo);
+     Serial.print("DISTANCIA:");
+     Serial.println(dist, 2);
+    } else {
+     Serial.println("ERRO:ARG_ULTRASSOM");
     }
-    else
-    {
-      Serial.println("ERRO:PARAMETROS_ULTRASSOM_AUSENTES"); // Se faltar a vírgula
-    }
-    return; // Importante: Sai da função processarComando após lidar com o comando ULTRASSOM
-  }
+    return;
+   }
 
   // ===  DIGITAL_READ (ler pino digital) ===
   // Comando esperado do Python: <DIGITAL_READ:PINO,MODO>
@@ -550,57 +563,6 @@ void processarComando(String cmd)
     return; // Sai da função após processar o comando
   }
 
-  // --- COMANDO BOTAO_DEBOUNCE (usa a função de debounce assíncrona) ---
-  if (comando_temp == "BOTAO_DEBOUNCE")
-  {
-   int sep_arg = argumentos_temp.indexOf(',');
-    if (sep_arg == -1)
-    {
-      Serial.println("ERRO:ARG_INVALIDO_BOTAO_DEBOUNCE");
-      return;
-    }
-    String pinoStr = argumentos_temp.substring(0, sep_arg);
-    String modoStr = argumentos_temp.substring(sep_arg + 1);
-
-    pinoStr.trim();
-    modoStr.trim();
-
-    int pino = pinoStr.toInt();
-
-    int modo = -1;
-    if (modoStr == "INPUT")
-    {
-      modo = INPUT;
-    }
-    else if (modoStr == "INPUT_PULLUP")
-    {
-      modo = INPUT_PULLUP;
-    }
-    else
-    {
-      Serial.println("ERRO:MODO_INVALIDO");
-      return;
-    }
-
-    if (pino >= 0 && pino <= 19 && modo != -1)
-    {
-      pinMode(pino, modo);
-      botao_zoy_debounce = pino;
-      debounceActive = true;
-
-      // Força uma leitura inicial para não retornar valor antigo
-      debouncedButtonRead(pino);
-
-      Serial.print("BOTAO_DEBOUNCE_VALOR:");
-      Serial.println(button_zoy_State); // Agora é atualizado constantemente
-    }
-    else
-    {
-      Serial.println("ERRO:PARAMETROS_BOTAO_DEBOUNCE_INVALIDOS");
-    }
-    return;
-  }
-
   // === LER SENSOR ANALÓGICO (IR, LDR, Potenciômetro, etc.) ===
   if (comando_temp == "ANALOG_READ")  {
   
@@ -617,6 +579,7 @@ void processarComando(String cmd)
     }
     return; // Sai da função após processar o comando
   }
+  
   // === LED_TREZE ===
   if (comando_temp == "LED_TREZE") {
   
@@ -649,6 +612,7 @@ void processarComando(String cmd)
     }
     return;
   }
+  
   // === LED LEFT ===
   if (comando_temp == "LED_LEFT")  {
     if (argumentos_temp == "HIGH")
@@ -667,6 +631,7 @@ void processarComando(String cmd)
     }
     return;
   }
+  
   // === LED RIGHT ===
   if (comando_temp == "LED_RIGHT")  {
     if (argumentos_temp == "HIGH")
@@ -685,6 +650,7 @@ void processarComando(String cmd)
     }
     return;
   }
+  
   // === ACIONA OS PINOS DO MOTOR (D3, D5, D6, D11) ===
   if (comando_temp == "D3" || comando_temp == "D5" || comando_temp == "D6" || comando_temp == "D11")  {
     int pinoAlvo = comando_temp.substring(1).toInt(); // Extrai o número do pino (ex: de "D3" pega 3)
@@ -704,6 +670,7 @@ void processarComando(String cmd)
     }
     return;
   }
+  
   // === MOTOR ESQUERDO_FRENTE ===
   if (comando_temp == "MOTOR_ESQUERDO_FRENTE")  {
     int velA = argumentos_temp.toInt();
@@ -712,6 +679,7 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
+  
   // === MOTOR ESQUERDO_TRAS ===
   if (comando_temp == "MOTOR_ESQUERDO_TRAS")  {
     int velA = argumentos_temp.toInt();
@@ -720,6 +688,7 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
+  
   // === MOTOR DIREITO_FRENTE ===
   if (comando_temp == "MOTOR_DIREITO_FRENTE")  {
      int velA = argumentos_temp.toInt();
@@ -728,6 +697,7 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
+  
   // === MOTOR DIREITO_TRAS ===
   if (comando_temp == "MOTOR_DIREITO_TRAS")  {
     int velA = argumentos_temp.toInt();
@@ -736,6 +706,7 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
+  
   // === MOTOR FRENTE ===
   if (comando_temp == "MOTOR_FRENTE")  {
    int sep = argumentos_temp.indexOf(',');
@@ -753,6 +724,7 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
+  
   // === MOTOR TRAS ===
   if (comando_temp == "MOTOR_TRAS")  {
     int sep = argumentos_temp.indexOf(',');
@@ -770,6 +742,7 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
+  
   // === PARAR TODOS OS MOTORES ===
   if (comando_temp == "PARAR")  {
     analogWrite(MOTOR_E1, 0);
@@ -793,6 +766,7 @@ void processarComando(String cmd)
     Serial.println("OK");
     return;
   }
+  
   // === AGUARDA:N segundos - AGORA NÃO-BLOQUEANTE ===
   if (comando_temp == "AGUARDA")  {
     argumentos_temp.trim();
@@ -813,6 +787,7 @@ void processarComando(String cmd)
     Serial.println("OK_BEEP");
     return;
   }
+  
   // === LED_PISCA_LEFT ===
   if (comando_temp == "LED_PISCA_LEFT") {
     int vezes = argumentos_temp.toInt();
@@ -831,6 +806,7 @@ void processarComando(String cmd)
     }
     return;
   }
+  
   // === LED_PISCA_RIGHT ===
   if (comando_temp == "LED_PISCA_RIGHT")  {
     int vezes = argumentos_temp.toInt();
@@ -849,99 +825,90 @@ void processarComando(String cmd)
     }
     return;
   }
-   // === SERVO MOTOR <A:9> (Abrir a garra) - AGORA NÃO-BLOQUEANTE ===
-  if (comando_temp == "A"){
-     int servoPin = argumentos_temp.toInt();
-     pinMode(servoPin, OUTPUT);
-     digitalWrite(servoPin, LOW);
-     
-     // Configura o movimento progressivo
-     servo360Pin = servoPin;
-     servoCurrentAngle = 175; // Posição inicial
-     servoTargetAngle = 0;   // Posição final
-     servoLastMoveTime = millis();
-     
-     Serial.println("OK_ABRIR_GARRA_INICIO"); // Resposta imediata, Node.js aguarda SERVO_FIM
-     return;
-  } 
-  // === SERVO MOTOR <C:9> (Fechar a garra) - AGORA NÃO-BLOQUEANTE ===
-  else if (comando_temp == "C") {
-     int servoPin = argumentos_temp.toInt();
-     pinMode(servoPin, OUTPUT);
-     digitalWrite(servoPin, LOW);
-     
-     // Configura o movimento progressivo
-     servo360Pin = servoPin;
-     servoCurrentAngle = 0; // Posição inicial
-     servoTargetAngle = 175; // Posição final
-     servoLastMoveTime = millis();
-     
-     Serial.println("OK_FECHAR_GARRA_INICIO"); // Resposta imediata, Node.js aguarda SERVO_FIM
-     return;
-  }
-  // === SERVO MOTOR 360 GIRAR <HO:PINO>===
-  else if (comando_temp == "HO") {
-    int sep1 = argumentos_temp.indexOf(','); // posição do 1º separador
-    if (sep1 == -1)
-    {
-      Serial.println("ERRO:ARG_INVALIDO_SOM");
-      return;
-    }
-    String nivelStr = argumentos_temp.substring(0, sep1);
-    String tempoStr = argumentos_temp.substring(sep1 + 1);
 
-    nivelStr.trim();
-    tempoStr.trim();
-    servo360Pin = (unsigned int)nivelStr.toInt();
-    unsigned int velocidade = (unsigned int)tempoStr.toInt();
+  // === COMANDOS DE SERVO MOTOR PROGRESSIVO (A/C) ===
+  // Atualizado para usar lógica Servo.h sem travar
+  if (comando_temp == "A") { // ABRIR
+    int pino = argumentos_temp.toInt();
+  
+    // Configura o servo físico
+    ZoyServo* s = obterServo(pino);
+    if (!s) { Serial.println("ERRO:ZOY_MAX_SERVOS_LIMIT"); return; }
     
-    pinMode(servo360Pin, OUTPUT);
-    digitalWrite(servo360Pin, LOW);
-    pulsoServo360 = velocidade;
-
-    char msg[50];
-    sprintf(msg, "Servo do pino %d ROTAÇÃO HORÁRIA", servo360Pin);
-    Serial.println(msg);
-    return;
-
-
-  // === SERVO MOTOR 360 GIRAR <AH:PINO>===
-  } else if (comando_temp == "AH") {
-    int sep1 = argumentos_temp.indexOf(','); // posição do 1º separador
-    if (sep1 == -1)
-    {
-      Serial.println("ERRO:ARG_INVALIDO_SOM");
-      return;
-    }
-    String nivelStr = argumentos_temp.substring(0, sep1);
-    String tempoStr = argumentos_temp.substring(sep1 + 1);
-
-    nivelStr.trim();
-    tempoStr.trim();
-    servo360Pin = (unsigned int)nivelStr.toInt();
-    unsigned int velocidade = (unsigned int)tempoStr.toInt();
-    pulsoServo360 = velocidade;
-    char msg[50];
-    sprintf(msg, "Servo do pino %d ROTAÇÃO ANTIHORÁRIA", servo360Pin);
-    Serial.println(msg);
-    return;
-
-  // === SERVO MOTOR 360 PARAR <P:PINO>===
-  } else if (comando_temp == "P") {
-    servo360Pin = argumentos_temp.toInt(); // global
-    pinMode(servo360Pin, OUTPUT);
-    digitalWrite(servo360Pin, LOW);
-    pulsoServo360 = 1500; // parar
-
-    char msg[50];
-    sprintf(msg, "Servo do pino %d PARAR ROTAÇÃO", servo360Pin);
-    Serial.println(msg);
+    // Define a animação global
+    garraPino = pino;
+    garraAnguloAtual = 175; // Começa fechada
+    garraAnguloAlvo = 0;  // Vai para aberto
+    
+    // Seta posição inicial imediata para garantir
+    s->objetoServo.write(garraAnguloAtual);
+    
+    garraUltimoMovimento = millis();
+    Serial.println("OK_ABRIR_GARRA_INICIO");
     return;
   }
+  
+  if (comando_temp == "C") { // FECHAR
+    int pino = argumentos_temp.toInt();
+  
+    ZoyServo* s = obterServo(pino);
+    if (!s) { Serial.println("ERRO:ZOY_MAX_SERVOS_LIMIT"); return; }
+    
+    garraPino = pino;
+    garraAnguloAtual = 0;  // Começa aberta
+    garraAnguloAlvo = 175; // Vai para fechado
+    
+    s->objetoServo.write(garraAnguloAtual);
+    
+    garraUltimoMovimento = millis();
+    Serial.println("OK_FECHAR_GARRA_INICIO");
+    return;
+  }
+  
+  // === COMANDOS SERVO 360 CONTINUO (HO, AH, P) ===
+  // Agora suporta múltiplos servos (ex: roda esquerda D2, roda direita D3)
+  
+  if (comando_temp == "HO") { // Horário
+    int sep = argumentos_temp.indexOf(',');
+    int pino = argumentos_temp.substring(0, sep).toInt();
+    int vel = argumentos_temp.substring(sep + 1).toInt(); // Espera valor em us (ex: 1300)
+    
+    ZoyServo* s = obterServo(pino);
+    if (s) {
+     s->objetoServo.writeMicroseconds(vel); // Controle preciso de pulso
+     Serial.println("OK_SERVO_HO");
+    }
+    return;
+  }
+  
+  if (comando_temp == "AH") { // Anti-Horário
+    int sep = argumentos_temp.indexOf(',');
+    int pino = argumentos_temp.substring(0, sep).toInt();
+    int vel = argumentos_temp.substring(sep + 1).toInt();
+    
+    ZoyServo* s = obterServo(pino);
+    if (s) {
+     s->objetoServo.writeMicroseconds(vel);
+     Serial.println("OK_SERVO_AH");
+    }
+    return;
+  }
+  
+  if (comando_temp == "P") { // Parar Servo Específico
+    int pino = argumentos_temp.toInt();
+    ZoyServo* s = obterServo(pino);
+    if (s) {
+     s->objetoServo.writeMicroseconds(1500); // Sinal neutro (parada)
+     // Opcional: Se quiser liberar o motor totalmente: desanexarServo(pino);
+     Serial.println("OK_SERVO_PARADO");
+    }
+    return;
+  }
+
 
   // === Comando ZOY de firmware ===
   if (comando_temp == "ZOY" && argumentos_temp == "ZOY") {
-    Serial.println("FIRMWARE:ZOY_STEAM:v0.8.2"); // Versão atualizada
+    Serial.println("FIRMWARE:ZOY_STEAM:v0.9.0"); // Versão atualizada
     return;
   }
   

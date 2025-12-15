@@ -1,12 +1,12 @@
 /*************************************************************************
-* File Name     : zoy_uno_firmware.ino
+* File Name    : zoy_uno_firmware.ino
 * Author       : Oliveira, Majela
-*          : Lourenço, Moises
-*          : Correia, Felipe
+*              : Lourenço, Moises
+*              : Correia, Felipe
 * Updated      : Gemini AI (Refatoração Bibliotecas)
-* Version      : v0.8.2 (Otimização Servo.h e Ultrasonic)
-* Date        : 12/12/2025
-* Description    : Firmware desenvolvido exclusivamente para arduino uno para zoyBlocks
+* Version      : v0.9.2 (Otimização Servo.h e Ultrasonic)
+* Date         : 12/12/2025
+* Description  : Firmware desenvolvido exclusivamente para arduino uno para zoyBlocks
 * License      : Licença Pública Geral Menor GNU(LGPL)
 * Copyright (C) 2025 Zoy Educa. All right reserved.
 * http://www.zoy.com.br/
@@ -22,7 +22,6 @@
 const int LED_13 = 13;
 const int BUZZER = 12;
 const int ZOY_MAX_SERVOS = 6;   // Quantidade máxima de servos simultâneos
-// const int MAX_DISTANCIA = 200; // Distância máxima ultrassom (cm) para evitar lags - Removido
 
 // ==== ESTRUTURAS DE CONTROLE ====
 
@@ -217,8 +216,8 @@ int lerAnalogico(String pino)
 
  int num = pino.substring(1).toInt(); // pega o número após 'A'
 
- // Garante apenas os pinos alnalogicos do uno: [A0, A1, A2, A3, A4, A5, A6 e A7]
- if (num < 0 || num > 7)
+ // Garante apenas os pinos alnalogicos do uno: [A0, A1, A2, A3, A4 e A5]
+ if (num < 0 || num > 5)
   return -1;
 
  return analogRead(A0 + num);
@@ -607,7 +606,7 @@ void processarComando(String cmd) {
  }
 
  if (comando_temp == "ZOY") {
-  Serial.println("FIRMWARE:ZOY_UNO:v0.8.2");
+  Serial.println("FIRMWARE:ZOY_UNO:v0.9.0");
   return;
  }
 
