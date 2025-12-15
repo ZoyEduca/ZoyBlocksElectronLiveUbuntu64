@@ -580,9 +580,17 @@ async function atualizarWorkspace(selectPlaca) {
 // ----------------------------------------------------------------------------
 // Atualiza espaço de código de acordo com a manipulção do blocos no workspace
 function atualizarAreaCodigo() {
-  const codigo = Blockly.JavaScript.workspaceToCode(workspace);
-  document.getElementById("areaCodigo").textContent =
-    codigo || "# Nenhum código gerado.";
+  // Proteção simples para erro no carregamento do workspace ou Blockly
+  if (!window.workspace || !Blockly.JavaScript) return;
+
+  try {
+    const codigo = Blockly.JavaScript.workspaceToCode(workspace);
+    document.getElementById("areaCodigo").textContent =
+      codigo || "# Nenhum código gerado.";
+  } catch (e) {
+    console.warn("Erro ao gerar código:", e);
+    document.getElementById("areaCodigo").textContent = "# Erro na geração do código.";
+  }
 }
 
 function configurarAtualizacaoCodigo() {
@@ -759,16 +767,22 @@ document.getElementById("toggleSidebar").addEventListener("click", function () {
 // ----------- NavBar  --------------------------------------------------------
 // ----------------------------------------------------------------------------
 function salvarProjeto() {
-  const state = Blockly.serialization.workspaces.save(window.workspace);
-  const json = JSON.stringify(state, null, 2);
+  try {
+    const state = Blockly.serialization.workspaces.save(window.workspace);
+    const json = JSON.stringify(state, null, 2);
+    
+    const blob = new Blob([json], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "projeto.json";
+    link.click();
 
-  const blob = new Blob([json], { type: "application/json" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "projeto.json";
-  link.click();
-
-  alert("💾 Projeto salvo com sucesso!");
+    // Substituído alert por Toast
+    mostrarToast("Projeto salvo com sucesso!", "save");
+  } catch (error) {
+    console.error(error);
+    mostrarToast("Erro ao salvar projeto.", "error");
+  }
 }
 
 async function carregarProjeto() {
@@ -786,10 +800,23 @@ async function carregarProjeto() {
         const state = JSON.parse(event.target.result);
         window.workspace.clear();
         Blockly.serialization.workspaces.load(state, window.workspace);
-        atualizarAreaCodigo();
-        alert("📂 Projeto JSON carregado com sucesso!");
+        
+        // Se tiver a função atualizarAreaCodigo no seu escopo, chame-a aqui
+        if(typeof atualizarAreaCodigo === 'function') atualizarAreaCodigo(); 
+        
+        // Substituído alert por Toast
+        mostrarToast("Projeto carregado com sucesso!", "load");
       } catch (error) {
-        alert("❌ Erro ao carregar o projeto JSON. Verifique se o arquivo é válido.");
+        console.error(error);
+        mostrarToast("Verifique placa selecionada -  Arquivo inválido, versão antiga ou corrompida", "error");
+
+        // Garante que o workspace seja limpo (remove blocos parciais ou lixos gerados no erro)
+        if (window.workspace) {
+            window.workspace.clear();
+        }
+
+        // Atualiza a área de código para mostrar a mensagem padrão
+        atualizarAreaCodigo();
       }
     };
     reader.readAsText(file);
@@ -874,13 +901,28 @@ function atualizarLayoutConexao(novoEstado, mensagem, tipo) {
   mostrarToast(mensagem, tipo);
 }
 
-// Função interna de toast reaproveitada do toggleConexao
+// Função interna de toast uso do toggleConexao e mostrar o Salar e carregar blocos de projetos
 function mostrarToast(mensagem, tipo = "usb-conectado") {
   const toastEl = document.getElementById("statusToast");
   const toastMensagem = document.getElementById("statusToastMensagem");
   const toastIcon = document.getElementById("statusToastIcon");
 
   const icons = {
+    // Ícones SVG para os toasts de Salvar/Carregar projetos
+    "save": `
+        <span class="text-primary">
+          <svg viewBox="0 0 16 16" width="1.3em" height="1.3em" fill="currentColor">
+            <path d="M11 2H9v3h2z"/><path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
+          </svg>
+        </span>`,
+    "load": `
+        <span class="text-warning">
+          <svg viewBox="0 0 16 16" width="1.3em" height="1.3em" fill="currentColor">
+            <path d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3m-8.322.12C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981zM2 4a1 1 0 0 0-1 1v1h14V5a1 1 0 0 0-1-1z"/>
+          </svg>
+        </span>`,
+
+    // Ícones SVG para os toasts de status de conexão
     "usb-conectado": `
         <span role="img" aria-label="usb-connected" class="text-success">
           <svg viewBox="0 0 24 24" width="1.3em" height="1.3em" fill="currentColor" aria-hidden="true">
