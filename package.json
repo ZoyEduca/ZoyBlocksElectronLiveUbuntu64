@@ -51,15 +51,19 @@
       {
         "from": "python/chatbot/",
         "to": "python/chatbot",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       },
       {
         "from": "python/zoy_vision/dist/vision/",
         "to": "python/zoy_vision",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       },
       {
-        "from": "python/models/",  
+        "from": "python/models/",
         "to": "python/models",
         "filter": [
           "**/*"
@@ -83,13 +87,15 @@
   "devDependencies": {
     "cpx": "^1.2.1",
     "cross-env": "^10.1.0",
-    "electron": "^38.2.1",
+    "electron": "31.7.7",
     "electron-builder": "^26.0.12",
     "electron-rebuild": "^3.2.9"
   },
   "dependencies": {
+    "ace": "^1.3.0",
     "blockly": "^12.3.1",
     "dotenv": "^17.2.3",
-    "serialport": "^12.0.0"
+    "serialport": "^12.0.0",
+    "ws": "^8.18.3"
   }
 }

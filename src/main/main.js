@@ -13,6 +13,8 @@ const {
   shell,
 } = require("electron");
 
+app.disableHardwareAcceleration();
+
 require("dotenv").config();
 const fs = require("fs/promises");
 const { spawn } = require("child_process");

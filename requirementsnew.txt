@@ -1,0 +1,33 @@
+# =====================================================
+# ZoyBlocks – Ambiente científico compatível (Python 3.8)
+# CPU-only • Sem CUDA • Sem GPU
+# =====================================================
+
+# ---------------------------
+# Núcleo científico (seguro p/ Py 3.8)
+# ---------------------------
+numpy==1.24.4
+scipy==1.10.1
+scikit-learn==1.3.2
+
+
+# ---------------------------
+# IA / NLP (compatível com numpy 1.24)
+# ---------------------------
+transformers==4.36.2
+sentence-transformers==2.7.0
+
+
+# ---------------------------
+# Visão computacional (zoyVision)
+# ---------------------------
+opencv-python==4.8.1.78
+mediapipe==0.10.21
+
+
+# ---------------------------
+# Utilitários
+# ---------------------------
+pyserial
+flask
+pyinstaller==6.17.0
